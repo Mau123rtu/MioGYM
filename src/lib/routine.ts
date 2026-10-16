@@ -2,8 +2,9 @@ import { supabase } from './supabase'
 import type { Profile } from '../context/AuthContext'
 import { toArr, type Answers } from './questionnaires'
 
-type G = 'pecho' | 'espalda' | 'hombros' | 'brazos' | 'piernas' | 'abdomen'
-interface Ex { n: string; g: G; eq: string[]; z: string[] }
+
+export type G = 'pecho' | 'espalda' | 'hombros' | 'brazos' | 'piernas' | 'abdomen'
+export interface Ex { n: string; g: G; eq: string[]; z: string[] }
 
 export interface PlanExercise { name: string; sets: number; reps: string; rest: number }
 export interface PlanDay { weekday: string; name: string; rest: boolean; exercises: PlanExercise[] }
@@ -14,12 +15,13 @@ export interface Plan {
   totalWeeks?: number
   notes: string[]
   warnings: string[]
+  custom?: boolean           // true si viene de una propuesta de IA
 }
 
 const E = (n: string, g: G, eq: string, z = ''): Ex => ({ n, g, eq: eq.split(','), z: z ? z.split(',') : [] })
 
 // z = zonas articulares que el ejercicio carga (para excluirlo si hay molestia ahí)
-const CATALOG: Ex[] = [
+export const CATALOG: Ex[] = [
   E('Press de banca con barra', 'pecho', 'libres', 'hombro,codo'), E('Press con mancuernas', 'pecho', 'libres', 'hombro'),
   E('Press de pecho en máquina', 'pecho', 'maquinas', 'hombro'), E('Cruces en polea', 'pecho', 'poleas', 'hombro'),
   E('Flexiones', 'pecho', 'corporal', 'hombro,codo'), E('Flexiones con banda', 'pecho', 'bandas', 'hombro'),
@@ -173,20 +175,65 @@ export function generateRoutine(p: Profile, r: Answers, inj: Answers | null): Pl
 }
 
 /** Regenera la rutina con las respuestas guardadas (se llama al terminar rutinas o lesiones). */
-export async function regenerateRoutine(userId: string, profile: Profile | null) {
+export async function regenerateRoutine(userId: string, profile: Profile | null, force = false) {
   if (!profile) return
   const { data } = await supabase.from('module_profiles').select('module,answers').in('module', ['rutinas', 'lesiones'])
   const rut = data?.find(d => d.module === 'rutinas')?.answers
   const les = data?.find(d => d.module === 'lesiones')?.answers ?? null
   if (!rut) return
   const plan = generateRoutine(profile, rut, les)
-  // conserva la fecha de inicio del ciclo si ya existía
   const old = await supabase.from('routines').select('plan').maybeSingle()
-  if (old.data?.plan?.startDate) plan.startDate = old.data.plan.startDate
+  const oldPlan = old.data?.plan as Plan | undefined
+
+  // Si el usuario eligió un plan de IA, no se reemplaza solo
+  if (oldPlan?.custom && !force && plan.days.length > 0) {
+    if (les?.dolor === 'si') {
+      const w = 'Reportaste una molestia: revisa que los ejercicios de tu rutina propuesta no carguen esa zona, o vuelve al plan automático, que sí la evita.'
+      if (!oldPlan.warnings.includes(w)) {
+        oldPlan.warnings = [...oldPlan.warnings, w]
+        await supabase.from('routines').upsert({ user_id: userId, plan: oldPlan }, { onConflict: 'user_id' })
+      }
+    }
+    return
+  }
+  if (!force && oldPlan?.startDate) plan.startDate = oldPlan.startDate
   await supabase.from('routines').upsert({ user_id: userId, plan }, { onConflict: 'user_id' })
 }
 
+
+
+
+/** Convierte los días de una propuesta de IA en un plan semanal (Lunes, Martes…) */
+export function planFromDays(days: { name: string; exercises: PlanExercise[] }[], warnings: string[]): Plan {
+  const WEEKDAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+  const PATTERN: Record<number, number[]> = {
+    1: [0], 2: [0, 3], 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 4, 5], 6: [0, 1, 2, 3, 4, 5],
+  }
+  const slots = PATTERN[Math.min(6, Math.max(1, days.length))]
+  const week: PlanDay[] = WEEKDAYS.map((w, idx) => {
+    const k = slots.indexOf(idx)
+    if (k === -1) return { weekday: w, name: `${w} · Descanso`, rest: true, exercises: [] }
+    return { weekday: w, name: `${w} · ${days[k].name}`, rest: false, exercises: days[k].exercises }
+  })
+  return {
+    days: week, weeks: [week, week, week, week], startDate: new Date().toISOString(), totalWeeks: 4, custom: true,
+    notes: [
+      'Este plan viene de una propuesta de IA que aceptaste. Los ejercicios no cambian solos cada mes; puedes volver al plan automático cuando quieras.',
+      'Cargas: elige un peso con el que terminarías cada serie con 2–3 repeticiones en reserva y súbelo poco a poco.',
+    ],
+    warnings,
+  }
+}
+
+export async function savePlan(userId: string, plan: Plan) {
+  return supabase.from('routines').upsert({ user_id: userId, plan }, { onConflict: 'user_id' })
+}
+
+
+/** Grupo muscular de un ejercicio, según el catálogo */
+export const groupOf = (name: string): string | null => CATALOG.find(e => e.n === name)?.g ?? null
 /** Semana actual del ciclo, días de esa semana y fecha de fin del ciclo */
+
 export function planProgress(plan: Plan) {
   const s = plan.startDate ? new Date(plan.startDate) : new Date()
   s.setHours(0, 0, 0, 0)
@@ -202,4 +249,6 @@ export function planProgress(plan: Plan) {
     days: weeks[Math.min(week, weeks.length - 1)],
     todayIdx: (new Date().getDay() + 6) % 7,
   }
+
+  
 }

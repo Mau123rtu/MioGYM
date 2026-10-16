@@ -1,12 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import Icon from './Icons'
 
 const tabs = [
-  { to: '/app', end: true, icon: '🏠', label: 'Inicio' },
-  { to: '/app/ejercicios', icon: '🏋️', label: 'Ejercicios' },
-  { to: '/app/nutricion', icon: '🥗', label: 'Nutrición' },
-  { to: '/app/lesiones', icon: '🩹', label: 'Lesiones' },
-  { to: '/app/suplementos', icon: '💊', label: 'Suplem.' },
-  { to: '/app/mas', icon: '☰', label: 'Más' },
+  { to: '/app', end: true, icon: 'home', label: 'Inicio' },
+  { to: '/app/ejercicios', icon: 'dumbbell', label: 'Rutinas' },
+  { to: '/app/nutricion', icon: 'food', label: 'Nutrición' },
+  { to: '/app/lesiones', icon: 'shield', label: 'Prevención' },
+  { to: '/app/suplementos', icon: 'pill', label: 'Suplem.' },
+  { to: '/app/mas', icon: 'menu', label: 'Más' },
 ]
 
 export default function Layout() {
@@ -16,7 +17,7 @@ export default function Layout() {
       <nav className="bottom-nav">
         {tabs.map(t => (
           <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => (isActive ? 'tab active' : 'tab')}>
-            <span>{t.icon}</span><small>{t.label}</small>
+            <Icon name={t.icon} size={22} /><small>{t.label}</small>
           </NavLink>
         ))}
       </nav>

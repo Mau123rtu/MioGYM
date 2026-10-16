@@ -4,10 +4,13 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { calcAge } from '../lib/utils'
 import { toArr, type Answers } from '../lib/questionnaires'
-import { planProgress, regenerateRoutine, type Plan, type PlanDay } from '../lib/routine'
+import { groupOf, planProgress, regenerateRoutine, type Plan, type PlanDay } from '../lib/routine'
+import Icon from '../components/Icons'
+import { howTo } from '../lib/exerciseInfo'
+import { Library, AiBuilder } from './Library'
 
 const META: Record<string, { db: string; title: string; cta: string }> = {
-  ejercicios: { db: 'rutinas', title: 'Ejercicios y rutinas', cta: 'Completa tu perfil de rutinas' },
+  ejercicios: { db: 'rutinas', title: 'Tu plan', cta: 'Completa tu perfil de rutinas' },
   nutricion: { db: 'nutricion', title: 'Nutrición', cta: 'Completa tu perfil nutricional' },
   lesiones: { db: 'lesiones', title: 'Prevención de lesiones', cta: 'Completa tu perfil de prevención' },
   suplementos: { db: 'suplementos', title: 'Suplementos', cta: 'Completa tu perfil de suplementos' },
@@ -15,122 +18,310 @@ const META: Record<string, { db: string; title: string; cta: string }> = {
 
 const URGENT = 'Si sientes dolor en el pecho, desmayo o dificultad importante para respirar, detén el ejercicio y busca atención médica urgente.'
 
-/* ---------------- EJERCICIOS (modo guiado) ---------------- */
-const DAY_SHORT = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
+/* ---------------- EJERCICIOS ---------------- */
+const MUSCLE: Record<string, string> = {
+  pecho: 'Pecho', espalda: 'Espalda', hombros: 'Hombros',
+  brazos: 'Bíceps y tríceps', piernas: 'Piernas y glúteos', abdomen: 'Abdomen',
+}
 
-function Session({ day }: { day: PlanDay }) {
+/** Porcentaje de series por grupo muscular */
+function distribution(day: PlanDay) {
+  const sets: Record<string, number> = {}
+  let total = 0
+  day.exercises.forEach(e => {
+    const g = groupOf(e.name)
+    if (!g) return
+    sets[g] = (sets[g] ?? 0) + e.sets
+    total += e.sets
+  })
+  const pcts: Record<string, number> = {}
+  Object.keys(sets).forEach(g => { pcts[g] = Math.round((sets[g] / total) * 100) })
+  const list = Object.entries(pcts).sort((a, b) => b[1] - a[1])
+  return { pcts, list, max: Math.max(1, ...Object.values(pcts)) }
+}
+
+/** Muñecos de frente y espalda con los músculos pintados */
+function BodyMap({ pcts, max, only, compact }: { pcts: Record<string, number>; max: number; only?: 'front' | 'back'; compact?: boolean }) {
+  const color = (...keys: string[]) => {
+    const p = Math.max(0, ...keys.map(k => pcts[k] ?? 0))
+    return p > 0 ? `rgba(255,212,0,${0.3 + 0.7 * (p / max)})` : '#262626'
+  }
+  const base = '#1d1d1d'
+  const Head = () => (<><circle cx="50" cy="17" r="11" fill={base} /><rect x="45" y="27" width="10" height="9" fill={base} /></>)
+  return (
+    <div className={compact ? 'body-wrap compact' : 'body-wrap'}>
+      {only !== 'back' && (
+        <figure>
+          <svg viewBox="0 0 100 190" role="img" aria-label="Vista frontal">
+            <Head />
+            <circle cx="27" cy="45" r="8" fill={color('hombros')} />
+            <circle cx="73" cy="45" r="8" fill={color('hombros')} />
+            <rect x="33" y="40" width="16" height="20" rx="6" fill={color('pecho')} />
+            <rect x="51" y="40" width="16" height="20" rx="6" fill={color('pecho')} />
+            <rect x="36" y="63" width="28" height="34" rx="6" fill={color('abdomen')} />
+            <rect x="15" y="54" width="10" height="42" rx="5" fill={color('brazos')} />
+            <rect x="75" y="54" width="10" height="42" rx="5" fill={color('brazos')} />
+            <rect x="34" y="100" width="14" height="82" rx="6" fill={color('piernas')} />
+            <rect x="52" y="100" width="14" height="82" rx="6" fill={color('piernas')} />
+          </svg>
+          <figcaption>Frente</figcaption>
+        </figure>
+      )}
+      {only !== 'front' && (
+        <figure>
+          <svg viewBox="0 0 100 190" role="img" aria-label="Vista posterior">
+            <Head />
+            <circle cx="27" cy="45" r="8" fill={color('hombros')} />
+            <circle cx="73" cy="45" r="8" fill={color('hombros')} />
+            <rect x="33" y="40" width="34" height="42" rx="9" fill={color('espalda')} />
+            <rect x="15" y="54" width="10" height="42" rx="5" fill={color('brazos')} />
+            <rect x="75" y="54" width="10" height="42" rx="5" fill={color('brazos')} />
+            <rect x="34" y="85" width="32" height="16" rx="7" fill={color('piernas')} />
+            <rect x="34" y="104" width="14" height="78" rx="6" fill={color('piernas')} />
+            <rect x="52" y="104" width="14" height="78" rx="6" fill={color('piernas')} />
+          </svg>
+          <figcaption>Espalda</figcaption>
+        </figure>
+      )}
+    </div>
+  )
+}
+
+/* ---------- Sesión guiada (estilo app de gimnasio) ---------- */
+interface Row { kg: string; reps: string; done: boolean }
+const repsDefault = (s: string) => parseInt(s.includes('/') ? s.split('/')[1] : s) || 10
+const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+
+function Session({ day, onExit }: { day: PlanDay; onExit: () => void }) {
   const { session } = useAuth()
+  const list = day.exercises
   const [ex, setEx] = useState(0)
-  const [done, setDone] = useState(0)
-  const [extra, setExtra] = useState<Record<number, number>>({})
-  const [kg, setKg] = useState('')
-  const [last, setLast] = useState<Record<string, number>>({})
+  const [rows, setRows] = useState<Row[][]>(() =>
+    list.map(e => Array.from({ length: e.sets }, () => ({ kg: '', reps: String(repsDefault(e.reps)), done: false }))))
+  const [restCfg, setRestCfg] = useState<Record<number, number>>({})
   const [rest, setRest] = useState<number | null>(null)
-  const saved = useRef<Set<string>>(new Set())
+  const [notes, setNotes] = useState<Record<number, string>>({})
+  const [showNote, setShowNote] = useState(false)
+  const [last, setLast] = useState<Record<string, { kg: number; reps: number | null }>>({})
+  const [finished, setFinished] = useState(false)
+  const savedSets = useRef<Set<string>>(new Set())
+  const logged = useRef(false)
 
   useEffect(() => {
-    supabase.from('workout_logs').select('exercise,weight_kg').order('logged_at', { ascending: false }).limit(300)
+    supabase.from('workout_logs').select('exercise,weight_kg,reps').order('logged_at', { ascending: false }).limit(300)
       .then(({ data }) => {
-        const m: Record<string, number> = {}
-        data?.forEach(l => { if (!(l.exercise in m)) m[l.exercise] = l.weight_kg })
+        const m: Record<string, { kg: number; reps: number | null }> = {}
+        data?.forEach(l => { if (!(l.exercise in m) && Number(l.weight_kg) > 0) m[l.exercise] = { kg: Number(l.weight_kg), reps: l.reps } })
         setLast(m)
       })
   }, [])
 
-  const list = day.exercises
-  const finished = ex >= list.length
-  const cur = list[ex]
-  const total = cur ? cur.sets + (extra[ex] ?? 0) : 0
-
-  const closeRest = () => {
-    setRest(null)
-    if (done >= total) { setEx(e => e + 1); setDone(0); setKg('') }
-  }
-
   // cuenta regresiva del descanso
   useEffect(() => {
     if (rest === null) return
-    if (rest <= 0) { navigator.vibrate?.(300); closeRest(); return }
+    if (rest <= 0) { navigator.vibrate?.(300); setRest(null); return }
     const t = setTimeout(() => setRest(r => (r === null ? null : r - 1)), 1000)
     return () => clearTimeout(t)
   }, [rest])
 
-  const markSet = async () => {
-    const n = done + 1
-    setDone(n)
-    const w = Number(kg)
-    if (w > 0 && !saved.current.has(cur.name)) {
-      saved.current.add(cur.name)
-      await supabase.from('workout_logs').insert({ user_id: session!.user.id, exercise: cur.name, weight_kg: w })
-      setLast(l => ({ ...l, [cur.name]: w }))
-    }
-    if (n >= total && ex === list.length - 1) { setEx(list.length); return } // último ejercicio: terminó
-    setRest(cur.rest)
-  }
-
-  const restart = () => { setEx(0); setDone(0); setExtra({}); setKg(''); setRest(null); saved.current = new Set() }
-
   if (list.length === 0) return null
 
+  const cur = list[ex]
+  const curRows = rows[ex]
+  const restSecs = restCfg[ex] ?? cur.rest
+  const allDone = (i: number) => rows[i].length > 0 && rows[i].every(r => r.done)
+  const totalDone = rows.reduce((a, r) => a + r.filter(x => x.done).length, 0)
+  const g = groupOf(cur.name)
+
+  const setRow = (i: number, patch: Partial<Row>) =>
+    setRows(rs => rs.map((r, k) => (k === ex ? r.map((x, j) => (j === i ? { ...x, ...patch } : x)) : r)))
+
+  const toggleSet = async (i: number) => {
+    const row = curRows[i]
+    setRow(i, { done: !row.done })
+    if (row.done) return
+    const key = `${ex}-${i}`
+    if (!savedSets.current.has(key)) {
+      savedSets.current.add(key)
+      const w = Number(row.kg) || 0
+      const reps = Number(row.reps) || null
+      await supabase.from('workout_logs').insert({ user_id: session!.user.id, exercise: cur.name, weight_kg: w, reps })
+      if (w > 0) setLast(l => ({ ...l, [cur.name]: { kg: w, reps } }))
+    }
+    const willFinishAll = rows.every((r, k) => (k === ex ? r.every((x, j) => j === i || x.done) : r.every(x => x.done)))
+    if (!willFinishAll) setRest(restSecs)
+  }
+
+  const addSet = () => {
+    const prev = curRows[curRows.length - 1]
+    setRows(rs => rs.map((r, k) => (k === ex ? [...r, { kg: prev?.kg ?? '', reps: prev?.reps ?? '10', done: false }] : r)))
+  }
+
+  const goTo = (i: number) => { setEx(i); setShowNote(false); setRest(null) }
+
+  const finish = () => {
+    if (totalDone > 0 && !logged.current) {
+      logged.current = true
+      supabase.from('workout_sessions').insert({ user_id: session!.user.id, day_name: day.name, sets_done: totalDone })
+    }
+    setRest(null)
+    setFinished(true)
+  }
+
   if (finished) return (
-    <div className="card grad" style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '3rem' }}>🎉</div>
-      <h2>¡Rutina de hoy completada!</h2>
-      <p>Hiciste {list.length} ejercicios. Descansa, hidrátate y come bien.</p>
-      <button className="btn" onClick={restart}>Repetir sesión</button>
+    <div className="card grad" style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+      <div className="big-icon"><Icon name="check" size={44} /></div>
+      <h2>{totalDone > 0 ? 'Entrenamiento completado' : 'Entrenamiento terminado'}</h2>
+      <p>{totalDone > 0 ? `Registraste ${totalDone} series. Tu sesión quedó guardada. Descansa, hidrátate y come bien.` : 'No marcaste series, así que no se guardó la sesión.'}</p>
+      <button className="btn" onClick={onExit}>Volver al plan</button>
     </div>
   )
 
-  if (rest !== null) return (
-    <div className="card rest">
-      <p className="hint">Descanso</p>
-      <div className="timer">{Math.floor(rest / 60)}:{String(rest % 60).padStart(2, '0')}</div>
-      <p className="hint">
-        {done >= total ? `Siguiente: ${list[ex + 1]?.name}` : `Serie ${done + 1} de ${total} · ${cur.name}`}
-      </p>
-      <div className="row">
-        <button className="btn" onClick={() => setRest(r => Math.max(0, (r ?? 0) - 15))}>−15 s</button>
-        <button className="btn" onClick={() => setRest(r => (r ?? 0) + 15)}>+15 s</button>
-      </div>
-      <button className="btn primary" onClick={closeRest}>Omitir descanso</button>
-    </div>
-  )
+  const isLast = ex === list.length - 1
 
   return (
-    <>
-      <p className="hint">Ejercicio {ex + 1} de {list.length}</p>
-      <div className="card player">
-        <h2>{cur.name}</h2>
-        <p className="hint">{cur.reps} repeticiones · descanso {cur.rest} s{last[cur.name] ? ` · última carga: ${last[cur.name]} kg` : ''}</p>
-
-        <div className="sets">
-          {Array.from({ length: total }).map((_, i) => (
-            <span key={i} className={i < done ? 'set done' : i === done ? 'set now' : 'set'}>{i + 1}</span>
-          ))}
-        </div>
-        <p><b>Serie {done + 1} de {total}</b></p>
-
-        <input type="number" inputMode="decimal" placeholder="Carga usada (kg, opcional)" value={kg} onChange={e => setKg(e.target.value)} />
-
-        <button className="go" onClick={markSet} aria-label="Serie hecha">→</button>
-        <p className="hint" style={{ textAlign: 'center', marginTop: 0 }}>Toca la flecha al terminar la serie</p>
-
-        <button className="link" onClick={() => setExtra(x => ({ ...x, [ex]: (x[ex] ?? 0) + 1 }))}>+ Agregar una serie</button>
-        <button className="link" onClick={() => { setEx(e => e + 1); setDone(0); setKg('') }}>Saltar ejercicio</button>
+    <div className="sess">
+      <div className="sess-top">
+        <button className="icon-btn" onClick={onExit} aria-label="Salir"><Icon name="down" size={26} /></button>
+        <button className="finish-btn" onClick={finish}>Terminar</button>
       </div>
-      {list[ex + 1] && <p className="hint">Sigue: {list[ex + 1].name}</p>}
-    </>
+
+      <div className="strip">
+        {list.map((e, i) => (
+          <button key={`${e.name}-${i}`} className={`sthumb${i === ex ? ' on' : ''}${allDone(i) ? ' ok' : ''}`} onClick={() => goTo(i)}>
+            <span className="circ">{allDone(i) ? <Icon name="check" size={22} /> : i + 1}</span>
+            <small>{e.name}</small>
+          </button>
+        ))}
+      </div>
+
+      <BodyMap pcts={g ? { [g]: 100 } : {}} max={100} only={g === 'espalda' ? 'back' : 'front'} compact />
+
+      <h2 className="exname">{cur.name}</h2>
+      <p className="howto">{howTo(cur.name)}</p>
+
+      <div className="qrow">
+        <button className="qbtn" onClick={() => setShowNote(s => !s)}><Icon name="pencil" size={16} />Notas</button>
+        <button className="qbtn" onClick={() => setRestCfg(c => ({ ...c, [ex]: restSecs >= 180 ? 30 : restSecs + 15 }))}>
+          <Icon name="clock" size={16} />Descanso {fmt(restSecs)}
+        </button>
+        <button className="qbtn" onClick={() => (isLast ? finish() : goTo(ex + 1))}><Icon name="skip" size={16} />Saltar</button>
+      </div>
+
+      {showNote && (
+        <textarea placeholder="Tus notas para este ejercicio…" value={notes[ex] ?? ''}
+          onChange={e => setNotes(n => ({ ...n, [ex]: e.target.value }))} />
+      )}
+
+      <div className="stable">
+        <div className="shead"><span>Serie</span><span>Previa</span><span>Kg</span><span>Repes</span><span /></div>
+        {curRows.map((r, i) => (
+          <div className={`srow${r.done ? ' done' : ''}`} key={i}>
+            <span className="sn">{i + 1}</span>
+            <span className="prev">{last[cur.name] ? `${last[cur.name].kg} × ${last[cur.name].reps ?? '–'}` : '–'}</span>
+            <input type="number" inputMode="decimal" placeholder="0" value={r.kg} onChange={e => setRow(i, { kg: e.target.value })} />
+            <input type="number" inputMode="numeric" value={r.reps} onChange={e => setRow(i, { reps: e.target.value })} />
+            <button className="chk" onClick={() => toggleSet(i)} aria-label={`Serie ${i + 1} hecha`}><Icon name="check" size={18} /></button>
+          </div>
+        ))}
+      </div>
+
+      <button className="btn add" onClick={addSet}><Icon name="plus" size={16} /> Añadir serie</button>
+
+      {allDone(ex) && (
+        <button className="btn primary" onClick={() => (isLast ? finish() : goTo(ex + 1))}>
+          {isLast ? 'Terminar entrenamiento' : `Siguiente: ${list[ex + 1].name}`}
+        </button>
+      )}
+
+      {rest !== null && (
+        <div className="restbar">
+          <div><small>Descanso</small><b>{fmt(rest)}</b></div>
+          <button onClick={() => setRest(r => Math.max(0, (r ?? 0) - 15))}>−15</button>
+          <button onClick={() => setRest(r => (r ?? 0) + 15)}>+15</button>
+          <button className="skipbtn" onClick={() => setRest(null)}>Omitir</button>
+        </div>
+      )}
+    </div>
   )
 }
 
+/* ---------- Pantalla de rutinas ---------- */
 function Exercises({ plan }: { plan: Plan | null }) {
-  const [sel, setSel] = useState<number | null>(null)
+  const [view, setView] = useState<{ idx: number; started: boolean } | null>(null)
+  const [screen, setScreen] = useState<'plan' | 'library' | 'ai'>('plan')
+  const [custom, setCustom] = useState<PlanDay | null>(null)
+  const { session, profile } = useAuth()
+
+  const go = (v: { idx: number; started: boolean } | null) => { setView(v); window.scrollTo(0, 0) }
+
+  const backToAuto = async () => {
+    if (!window.confirm('Tu plan semanal volverá a ser el automático según tu perfil. Tus rutinas de la biblioteca no se borran. ¿Continuar?')) return
+    await regenerateRoutine(session!.user.id, profile, true)
+    window.location.reload()
+  }
+
   if (!plan) return <p className="hint">Aún no se pudo generar tu rutina.</p>
   if (plan.days.length === 0) return <>{plan.warnings.map((w, i) => <div key={i} className="urgent">{w}</div>)}</>
 
+  if (custom) return <Session key={custom.name} day={custom} onExit={() => setCustom(null)} />
+  if (screen === 'library') return <Library onBack={() => setScreen('plan')} onStart={d => setCustom(d)} />
+  if (screen === 'ai') return <AiBuilder onBack={() => setScreen('plan')} onSaved={() => setScreen('library')} onAdopted={() => window.location.reload()} />
+
   const pr = planProgress(plan)
-  const idx = sel ?? pr.todayIdx
-  const day = pr.days[idx]
+  const partName = (d: PlanDay) => d.name.split(' · ')[1] ?? d.name
+
+  /* ---- Detalle de un día ---- */
+  if (view) {
+    const day = pr.days[view.idx]
+    const { pcts, list, max } = distribution(day)
+
+    if (view.started) return (
+      <Session key={`${pr.week}-${view.idx}`} day={day} onExit={() => go({ idx: view.idx, started: false })} />
+    )
+
+    return (
+      <>
+        <button className="back" onClick={() => go(null)}>← Tu plan</button>
+        <p className="hint" style={{ margin: 0 }}>{day.weekday}{view.idx === pr.todayIdx && ' · hoy'}</p>
+        <h2>{partName(day)}</h2>
+
+        <h3>Distribución muscular</h3>
+        <BodyMap pcts={pcts} max={max} />
+        <div className="mtiles">
+          {list.map(([g, p]) => (
+            <div className="mtile" key={g}>
+              <b>{p}%</b><small>{MUSCLE[g]}</small>
+              <span className="bar"><i style={{ width: `${p}%` }} /></span>
+            </div>
+          ))}
+        </div>
+
+        <h3 style={{ marginTop: '1.4rem' }}>Ejercicios</h3>
+        <div className="hscroll">
+          {day.exercises.map((e, i) => (
+            <div className="hcard" key={`${e.name}-${i}`}>
+              <span className="n">{i + 1}</span>
+              <b>{e.name}</b>
+              <small>{e.sets} series × {e.reps}</small>
+              <small>Descanso {e.rest} s</small>
+              <span className="tag">{MUSCLE[groupOf(e.name) ?? ''] ?? ''}</span>
+            </div>
+          ))}
+        </div>
+
+        <button className="btn primary" onClick={() => go({ idx: view.idx, started: true })}>Empezar ejercicio</button>
+      </>
+    )
+  }
+
+  /* ---- Lista de tarjetas (primero el día que toca) ---- */
+  const order: number[] = []
+  for (let k = 0; k < 7; k++) {
+    const i = (pr.todayIdx + k) % 7
+    if (!pr.days[i].rest) order.push(i)
+  }
+  const todayRest = pr.days[pr.todayIdx].rest
 
   return (
     <>
@@ -139,26 +330,47 @@ function Exercises({ plan }: { plan: Plan | null }) {
       <div className="card grad">
         <b>Semana {pr.weekNumber} de {pr.total}</b>{pr.cycle > 1 && <> · Ciclo {pr.cycle}</>}
         <p style={{ margin: '.3rem 0 0', fontSize: '.88rem' }}>
-          Sigue esta rutina hasta el {pr.end.toLocaleDateString('es', { day: 'numeric', month: 'long' })}.
-          Los ejercicios cambian en la semana 3 y después comienza un nuevo ciclo.
+          {plan.custom
+            ? `Usas una rutina propuesta por la IA. Sigue esta rutina hasta el ${pr.end.toLocaleDateString('es', { day: 'numeric', month: 'long' })}. Tus ejercicios no cambian solos.`
+            : `Sigue esta rutina hasta el ${pr.end.toLocaleDateString('es', { day: 'numeric', month: 'long' })}. Los ejercicios cambian en la semana 3 y después comienza un nuevo ciclo.`}
         </p>
+        {plan.custom && <button className="btn" onClick={backToAuto}>Volver al plan automático</button>}
       </div>
 
-      <div className="week">
-        {pr.days.map((d, i) => (
-          <button key={d.weekday} onClick={() => setSel(i)}
-            className={`wd${i === idx ? ' sel' : ''}${d.rest ? ' off' : ''}${i === pr.todayIdx ? ' today' : ''}`}>
-            {DAY_SHORT[i]}<small>{d.rest ? 'desc.' : 'entreno'}</small>
-          </button>
-        ))}
+      {todayRest && <p className="hint">Hoy es día de descanso. Tu próximo entrenamiento va primero.</p>}
+
+      {order.map((i, k) => {
+        const d = pr.days[i]
+        const top = distribution(d).list.slice(0, 3).map(([g]) => MUSCLE[g]).join(' · ')
+        const isToday = i === pr.todayIdx
+        return (
+          <div className={`dcard${k === 0 ? ' first' : ''}`} key={d.weekday}>
+            <div className="dinfo">
+              <small className="wk">{d.weekday}{isToday && <span className="badge">Hoy</span>}</small>
+              <h3>{partName(d)}</h3>
+              <p className="hint">{d.exercises.length} ejercicios · {top}</p>
+            </div>
+            <button className="btn-ver" onClick={() => go({ idx: i, started: false })}>Ver</button>
+          </div>
+        )
+      })}
+
+      <h3 style={{ marginTop: '1.4rem' }}>Más opciones</h3>
+      <div className="opts">
+        <button className="opt" onClick={() => setScreen('library')}>
+          <span className="ic"><Icon name="list" /></span><b>Biblioteca</b><small>Tus rutinas e historial</small>
+        </button>
+        <button className="opt" onClick={() => setScreen('ai')}>
+          <span className="ic"><Icon name="spark" /></span><b>Crear rutina con IA</b><small>División según tu perfil</small>
+        </button>
       </div>
 
-      <h3>{day.name}{idx === pr.todayIdx && ' · hoy'}</h3>
-      {day.rest
-        ? <div className="card"><p>😴 Día de descanso. Camina, estira suave y duerme bien: así te recuperas y progresas.</p></div>
-        : <Session key={`${pr.week}-${idx}`} day={day} />}
-
-      {plan.notes.length > 0 && <div className="card"><h3>Notas</h3>{plan.notes.map((n, i) => <p key={i} className="hint">• {n}</p>)}</div>}
+      {plan.notes.length > 0 && (
+        <div className="card">
+          <h3>Notas</h3>
+          {plan.notes.map((n, i) => <p key={i} className="hint">• {n}</p>)}
+        </div>
+      )}
     </>
   )
 }

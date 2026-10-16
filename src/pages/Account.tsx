@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { calcAge, calcBMI } from '../lib/utils'
 import Reminders from '../components/Reminders'
+import Icon from '../components/Icons'
 
 const GOAL: Record<string, string> = {
   masa: 'Ganar masa muscular', grasa: 'Perder grasa', fuerza: 'Ganar fuerza',
@@ -16,10 +17,10 @@ const PLACE: Record<string, string> = {
 const MIN_DAYS: Record<string, number> = { '1-2': 1, '3-4': 3, '5-6': 5, '7': 7 }
 
 const MODS = [
-  { slug: 'ejercicios', db: 'rutinas', icon: '🏋️', color: '#3fae6a', title: 'Rutinas', text: 'Ejercicios, series, repeticiones y progresión' },
-  { slug: 'nutricion', db: 'nutricion', icon: '🍴', color: '#d98a2b', title: 'Nutrición', text: 'Comidas, recetas y estimaciones nutricionales' },
-  { slug: 'lesiones', db: 'lesiones', icon: '🛡️', color: '#e5584d', title: 'Prevención', text: 'Restricciones, técnica y precauciones' },
-  { slug: 'suplementos', db: 'suplementos', icon: '💊', color: '#8a7be0', title: 'Suplementos', text: 'Información, calidad y seguridad' },
+  { slug: 'ejercicios', db: 'rutinas', icon: 'dumbbell', title: 'Rutinas', text: 'Ejercicios, series, repeticiones y progresión' },
+  { slug: 'nutricion', db: 'nutricion', icon: 'food', title: 'Nutrición', text: 'Comidas, recetas y estimaciones nutricionales' },
+  { slug: 'lesiones', db: 'lesiones', icon: 'shield', title: 'Prevención', text: 'Restricciones, técnica y precauciones' },
+  { slug: 'suplementos', db: 'suplementos', icon: 'pill', title: 'Suplementos', text: 'Información, calidad y seguridad' },
 ]
 
 interface WeightLog { id: number; weight_kg: number; logged_at: string }
@@ -52,7 +53,7 @@ export default function Account() {
     if (error) { setMsg(error.message); return }
     if (w !== profile?.weight_kg) await supabase.from('weight_logs').insert({ user_id: uid, weight_kg: w })
     await refreshProfile(); await load()
-    setMsg('Datos actualizados ✅')
+    setMsg('Datos actualizados')
   }
 
   const name = profile?.full_name ?? profile?.username ?? ''
@@ -74,15 +75,15 @@ export default function Account() {
 
   return (
     <>
-      <Link to="/app/mas" className="hint">← Volver</Link>
+      <Link to="/app/mas" className="back">← Volver</Link>
       <h1>Mi cuenta</h1>
 
       {/* 1. Perfil general */}
       <div className="flow-card">
-        <div className="flow-icon">👤</div>
+        <div className="flow-icon"><Icon name="user" size={26} /></div>
         <h3>Perfil general del usuario</h3>
         <p className="hint">Edad, medidas, objetivo, experiencia y disponibilidad</p>
-        <p style={{ margin: '.6rem 0 0' }}><b>{name}</b> (@{profile?.username})</p>
+        <p style={{ margin: '.8rem 0 0' }}><b>{name}</b> (@{profile?.username})</p>
         <p className="hint" style={{ margin: 0 }}>{session?.user.email}</p>
         <div className="chips">
           {age !== null && <span className="tag">{age} años</span>}
@@ -110,10 +111,10 @@ export default function Account() {
           const ok = done.includes(m.db)
           return (
             <Link key={m.slug} to={ok ? `/app/${m.slug}` : `/app/${m.slug}/perfil`} className="mod">
-              <div className="mod-icon" style={{ color: m.color }}>{m.icon}</div>
+              <div className="mod-icon"><Icon name={m.icon} size={26} /></div>
               <b>{m.title}</b>
               <small>{m.text}</small>
-              <span className={ok ? 'status ok' : 'status'}>{ok ? 'Personalizado ✓' : 'Completar perfil'}</span>
+              <span className={ok ? 'status ok' : 'status'}>{ok ? 'Personalizado' : 'Completar perfil'}</span>
             </Link>
           )
         })}
@@ -122,8 +123,8 @@ export default function Account() {
       <div className="arrow">↓</div>
 
       {/* 3. Seguimiento del progreso */}
-      <div className="flow-card dark">
-        <div className="flow-icon">📈</div>
+      <div className="flow-card">
+        <div className="flow-icon"><Icon name="chart" size={26} /></div>
         <h3>Seguimiento del progreso</h3>
         <p className="hint">Mediciones, entrenamientos realizados, adherencia y ajustes progresivos</p>
         <div className="stats">
@@ -134,7 +135,7 @@ export default function Account() {
         <p className="hint" style={{ marginTop: '.8rem' }}>
           Esta semana: {weekDays.size} de {target} días. {progressed > 0
             ? `Has subido la carga en ${progressed} ejercicio(s): sigue progresando de forma gradual.`
-            : 'Registra tus cargas en Ejercicios para ver tus ajustes progresivos.'}
+            : 'Registra tus cargas en Rutinas para ver tus ajustes progresivos.'}
         </p>
       </div>
 
@@ -142,7 +143,7 @@ export default function Account() {
         <h3>Historial de peso</h3>
         {wlogs.length === 0 && <p className="hint">Sin registros todavía.</p>}
         {[...wlogs].reverse().slice(0, 10).map(l => (
-          <p key={l.id} style={{ margin: '.3rem 0' }}>{new Date(l.logged_at).toLocaleDateString()} — {l.weight_kg} kg</p>
+          <p key={l.id} className="logrow"><span>{new Date(l.logged_at).toLocaleDateString()}</span><b>{l.weight_kg} kg</b></p>
         ))}
       </div>
 

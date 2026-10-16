@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import Icon from './Icons'
 
 interface Reminder {
   type: 'water' | 'exercise'
@@ -35,7 +36,7 @@ export default function Reminders() {
   // Agua: cada X minutos mientras la app esté abierta
   useEffect(() => {
     if (!water.enabled || !water.interval_minutes) return
-    const t = setInterval(() => notify('💧 ¡Hora de tomar agua!'), water.interval_minutes * 60000)
+    const t = setInterval(() => notify('Hora de tomar agua.'), water.interval_minutes * 60000)
     return () => clearInterval(t)
   }, [water.enabled, water.interval_minutes])
 
@@ -44,11 +45,10 @@ export default function Reminders() {
     if (!exercise.enabled || !exercise.time_of_day) return
     let last = ''
     const t = setInterval(() => {
-      const now = new Date()
-      const hhmm = now.toTimeString().slice(0, 5)
+      const hhmm = new Date().toTimeString().slice(0, 5)
       if (hhmm === exercise.time_of_day!.slice(0, 5) && last !== hhmm) {
         last = hhmm
-        notify('🏋️ ¡Es hora de entrenar!')
+        notify('Es hora de entrenar.')
       }
     }, 30000)
     return () => clearInterval(t)
@@ -59,7 +59,7 @@ export default function Reminders() {
       <h3>Recordatorios</h3>
 
       <label className="switch">
-        💧 Agua cada
+        <Icon name="drop" size={20} /><span style={{ flex: 1 }}>Agua cada</span>
         <select value={water.interval_minutes ?? 90}
           onChange={e => { const r = { ...water, interval_minutes: Number(e.target.value) }; setWater(r); save(r) }}>
           <option value={30}>30 min</option><option value={60}>1 h</option>
@@ -70,14 +70,14 @@ export default function Reminders() {
       </label>
 
       <label className="switch">
-        🏋️ Entrenar a las
+        <Icon name="dumbbell" size={20} /><span style={{ flex: 1 }}>Entrenar a las</span>
         <input type="time" value={exercise.time_of_day?.slice(0, 5) ?? '18:00'}
           onChange={e => { const r = { ...exercise, time_of_day: e.target.value }; setExercise(r); save(r) }} />
         <input type="checkbox" checked={exercise.enabled}
           onChange={e => { const r = { ...exercise, enabled: e.target.checked }; setExercise(r); save(r) }} />
       </label>
 
-      <p className="hint">Los avisos suenan mientras la app esté abierta. Para avisos con la app cerrada se necesitan notificaciones push (ver "Siguientes pasos").</p>
+      <p className="hint">Los avisos suenan mientras la app esté abierta.</p>
     </div>
   )
 }
