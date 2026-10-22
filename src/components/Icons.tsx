@@ -25,7 +25,9 @@ const P: Record<string, ReactNode> = {
   x: <path d="M6 6l12 12M18 6 6 18" />,
   up: <path d="m6 15 6-6 6 6" />,
   trash: <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />,
-    swap: <path d="M7 7h12l-3-3M17 17H5l3 3" />,
+  swap: <path d="M7 7h12l-3-3M17 17H5l3 3" />,
+    alert: <><path d="M12 3 2 20h20z" /><path d="M12 10v5M12 18h.01" /></>,
+  calendar: <><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M4 10h16M9 3v4M15 3v4" /></>,
 }
 
 export default function Icon({ name, size = 22 }: { name: string; size?: number }) {

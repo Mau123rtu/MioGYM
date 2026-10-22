@@ -55,6 +55,10 @@ export default function Account() {
     await refreshProfile(); await load()
     setMsg('Datos actualizados')
   }
+  const setSex = async (s: 'hombre' | 'mujer') => {
+    await supabase.from('profiles').update({ sex: s }).eq('id', session!.user.id)
+    await refreshProfile()
+  }
 
   const name = profile?.full_name ?? profile?.username ?? ''
   const age = calcAge(profile?.birth_date ?? null)
@@ -98,6 +102,17 @@ export default function Account() {
         <h3>Peso y altura</h3>
         <label>Peso (kg)<input type="number" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} /></label>
         <label>Altura (cm)<input type="number" inputMode="decimal" value={height} onChange={e => setHeight(e.target.value)} /></label>
+        <div className="card">
+        <h3>Figura del muñeco</h3>
+        <p className="hint">Se usa en la distribución muscular y en tus rutinas.</p>
+        <div className="tabs" style={{ marginBottom: 0 }}>
+          {(['hombre', 'mujer'] as const).map(s => (
+            <button key={s} className={profile?.sex === s ? 'on' : ''} onClick={() => setSex(s)}>
+              {s === 'hombre' ? 'Hombre' : 'Mujer'}
+            </button>
+          ))}
+        </div>
+      </div>
         {bmi && <p>IMC: <b>{bmi.value}</b> ({bmi.label})</p>}
         <button className="btn primary" onClick={save}>Guardar</button>
         {msg && <p className="hint">{msg}</p>}

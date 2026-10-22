@@ -7,6 +7,7 @@ import { recommend, type Tip } from '../lib/recommend'
 import { generateAi, swapExercise, type AiResult } from '../lib/aiRoutine'
 import { toArr, type Answers } from '../lib/questionnaires'
 import History from './History'
+import { BodyPicker } from '../components/Body'
 
 
 const MUSCLE: Record<G, string> = {
@@ -43,50 +44,7 @@ function TipList({ tips }: { tips: Tip[] }) {
   ))}</>
 }
 
-/* ---------- Muñeco clicable ---------- */
-function BodyPicker({ value, onPick }: { value: G | null; onPick: (g: G | null) => void }) {
-  const p = (g: G) => ({
-    fill: value === g ? '#ffd400' : '#2c2c2c',
-    onClick: () => onPick(value === g ? null : g),
-    role: 'button' as const,
-    'aria-label': MUSCLE[g],
-    style: { cursor: 'pointer' },
-  })
-  const Head = () => (<><circle cx="50" cy="17" r="11" fill="#1d1d1d" /><rect x="45" y="27" width="10" height="9" fill="#1d1d1d" /></>)
-  return (
-    <div className="body-wrap picker">
-      <figure>
-        <svg viewBox="0 0 100 190">
-          <Head />
-          <circle cx="27" cy="45" r="8" {...p('hombros')} />
-          <circle cx="73" cy="45" r="8" {...p('hombros')} />
-          <rect x="33" y="40" width="16" height="20" rx="6" {...p('pecho')} />
-          <rect x="51" y="40" width="16" height="20" rx="6" {...p('pecho')} />
-          <rect x="36" y="63" width="28" height="34" rx="6" {...p('abdomen')} />
-          <rect x="15" y="54" width="10" height="42" rx="5" {...p('brazos')} />
-          <rect x="75" y="54" width="10" height="42" rx="5" {...p('brazos')} />
-          <rect x="34" y="100" width="14" height="82" rx="6" {...p('piernas')} />
-          <rect x="52" y="100" width="14" height="82" rx="6" {...p('piernas')} />
-        </svg>
-        <figcaption>Frente</figcaption>
-      </figure>
-      <figure>
-        <svg viewBox="0 0 100 190">
-          <Head />
-          <circle cx="27" cy="45" r="8" {...p('hombros')} />
-          <circle cx="73" cy="45" r="8" {...p('hombros')} />
-          <rect x="33" y="40" width="34" height="42" rx="9" {...p('espalda')} />
-          <rect x="15" y="54" width="10" height="42" rx="5" {...p('brazos')} />
-          <rect x="75" y="54" width="10" height="42" rx="5" {...p('brazos')} />
-          <rect x="34" y="85" width="32" height="16" rx="7" {...p('piernas')} />
-          <rect x="34" y="104" width="14" height="78" rx="6" {...p('piernas')} />
-          <rect x="52" y="104" width="14" height="78" rx="6" {...p('piernas')} />
-        </svg>
-        <figcaption>Espalda</figcaption>
-      </figure>
-    </div>
-  )
-}
+
 
 /* ---------- Crear / editar rutina ---------- */
 function Builder({ initial, onCancel, onSaved }: { initial: Saved | null; onCancel: () => void; onSaved: (r: Saved) => void }) {

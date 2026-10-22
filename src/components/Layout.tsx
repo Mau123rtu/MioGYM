@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import Icon from './Icons'
+import { WorkoutProvider, useWorkout } from './Workout'
 
 const tabs = [
   { to: '/app', end: true, icon: 'home', label: 'Inicio' },
@@ -10,9 +11,10 @@ const tabs = [
   { to: '/app/mas', icon: 'menu', label: 'Más' },
 ]
 
-export default function Layout() {
+function Shell() {
+  const { day, min } = useWorkout()
   return (
-    <div className="app">
+    <div className={`app${day && min ? ' has-mini' : ''}`}>
       <main className="content"><Outlet /></main>
       <nav className="bottom-nav">
         {tabs.map(t => (
@@ -23,4 +25,8 @@ export default function Layout() {
       </nav>
     </div>
   )
+}
+
+export default function Layout() {
+  return <WorkoutProvider><Shell /></WorkoutProvider>
 }
