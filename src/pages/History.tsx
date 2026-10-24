@@ -24,18 +24,6 @@ const dur = (s: number) => {
   return h > 0 ? `${h} h ${m} min` : `${m} min`
 }
 
-function Spark({ v }: { v: number[] }) {
-  if (v.length < 2) return null
-  const w = 260, h = 64
-  const max = Math.max(...v), min = Math.min(...v), r = max - min || 1
-  const pts = v.map((x, i) => [(i / (v.length - 1)) * (w - 10) + 5, h - 8 - ((x - min) / r) * (h - 16)])
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="spark" preserveAspectRatio="none">
-      <polyline points={pts.map(p => p.join(',')).join(' ')} fill="none" stroke="#ffd400" strokeWidth="2.5" strokeLinejoin="round" />
-      {pts.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="3.5" fill="#ffd400" />)}
-    </svg>
-  )
-}
 
 function Bars({ items }: { items: [string, number][] }) {
   const max = Math.max(1, ...items.map(i => i[1]))
@@ -316,7 +304,7 @@ export default function History() {
     return <div className="card"><p className="hint" style={{ margin: 0 }}>Aún no hay entrenamientos. Cuando completes una rutina completa, aquí verás tu racha, tu calendario y tu progreso.</p></div>
 
     if (selEx) return <ExerciseDetail name={selEx} logs={logs} onBack={() => setSelEx(null)} />
-    
+
   return (
     <>
       <div className="stats">

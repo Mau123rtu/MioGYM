@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { lbToKg, ftInToCm } from '../lib/utils'
+import { Link } from 'react-router-dom'
+import PasswordField from '../components/PasswordField'
+import { checkPassword } from '../lib/password'
 
 const GOALS = [
   ['masa', 'Ganar masa muscular'], ['grasa', 'Perder grasa corporal'], ['fuerza', 'Ganar fuerza'],
@@ -48,7 +51,8 @@ export default function Onboarding() {
 
   const canNext = (): boolean => {
     switch (step) {
-      case 0: return /\S+@\S+\.\S+/.test(f.email) && f.username.trim().length >= 3 && f.password.length >= 6
+      case 0: return /\S+@\S+\.\S+/.test(f.email) && f.username.trim().length >= 3
+        && checkPassword(f.password, { username: f.username, email: f.email }).valid
       case 1: return f.name.trim().length > 0
       case 2: return !!f.birth && new Date(f.birth) < new Date()
       case 3: return !!f.goal
@@ -113,12 +117,14 @@ export default function Onboarding() {
     <div className="wizard">
       <div className="progress"><div style={{ width: `${((step + 1) / TOTAL) * 100}%` }} /></div>
 
-      {step === 0 && (
+            {step === 0 && (
         <>
+          <Link to="/" className="back">← Volver al inicio</Link>
           <h2>Crea tu cuenta</h2>
-          <input type="email" placeholder="Correo" value={f.email} onChange={e => set('email', e.target.value)} />
-          <input placeholder="Usuario (mín. 3 caracteres)" value={f.username} onChange={e => set('username', e.target.value)} />
-          <input type="password" placeholder="Contraseña (mín. 6)" value={f.password} onChange={e => set('password', e.target.value)} />
+          <input type="email" placeholder="Correo" value={f.email} onChange={e => set('email', e.target.value)} autoComplete="email" />
+          <input placeholder="Usuario (mín. 3 caracteres)" value={f.username} onChange={e => set('username', e.target.value)} autoComplete="username" />
+          <PasswordField value={f.password} onChange={v => set('password', v)} showRules
+            ctx={{ username: f.username, email: f.email }} autoComplete="new-password" />
         </>
       )}
 

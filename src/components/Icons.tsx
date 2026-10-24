@@ -30,6 +30,11 @@ const P: Record<string, ReactNode> = {
   calendar: <><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M4 10h16M9 3v4M15 3v4" /></>,
     flame: <path d="M12 3c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-6 1-10z" />,
   walk: <><circle cx="13" cy="4.5" r="1.8" /><path d="m10 21 2-6-2-3 1-4 3 2 2 3M8 12l3-4M12 15l3 2 1 4" /></>,
+    eye: <><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></>,
+  eyeoff: <path d="M3 3l18 18M10.6 6.2A9.5 9.5 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.2 3.7M6.6 7.6A17 17 0 0 0 2 12s4 7 10 7a9.6 9.6 0 0 0 4-.9" />,
+  camera: <><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></>,
+    lock: <><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
+  scale: <><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M8 9a5 5 0 0 1 8 0M12 12l2-2" /></>,
 }
 
 export default function Icon({ name, size = 22 }: { name: string; size?: number }) {

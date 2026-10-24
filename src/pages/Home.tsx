@@ -6,6 +6,7 @@ import { calcBMI } from '../lib/utils'
 import { groupOf, planProgress, type Plan, type PlanDay } from '../lib/routine'
 import Icon from '../components/Icons'
 import { CalendarModal, useTrainingData } from '../components/Streak'
+import Avatar from '../components/Avatar'
 
 
 const MUSCLE: Record<string, string> = {
@@ -44,7 +45,7 @@ export default function Home() {
     <>
       <header className="hero">
         <div><small>Bienvenido</small><h1>Hola, {name}</h1></div>
-        <div className="avatar">{name.charAt(0).toUpperCase()}</div>
+                <Link to="/app/mas/cuenta"><Avatar size={44} /></Link>
       </header>
 
       <div className="stats">

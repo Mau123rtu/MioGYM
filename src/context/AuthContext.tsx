@@ -14,7 +14,8 @@ export interface Profile {
   days_per_week: string | null
   training_place: string | null
   onboarding_completed: boolean
-    sex: string | null
+  sex: string | null
+  avatar_url: string | null
 }
 
 interface Ctx {

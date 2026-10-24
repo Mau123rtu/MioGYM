@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
+
+
 const slides = [
   { n: '01', title: 'Entrena con un plan', text: 'Rutinas semanales según tu objetivo, tu nivel y los días que tienes disponibles.' },
   { n: '02', title: 'Come con criterio', text: 'Orientación de nutrición y suplementos basada en evidencia, sin promesas milagro.' },
@@ -18,7 +20,7 @@ export default function Landing() {
 
   return (
     <div className="landing">
-      <div className="brand">MIO<span>GYM</span></div>
+      <img src="/Logo_GYM.png" alt="MioGym" className="brand-img" />
 
       <div>
         <div className="carousel">

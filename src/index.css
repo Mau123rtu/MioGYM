@@ -375,3 +375,110 @@ button.back{background:none;border:0;padding:0;font-family:inherit;cursor:pointe
 .psel{display:flex;justify-content:space-between;align-items:center;background:var(--s2);border:1px solid var(--line);border-radius:8px;padding:.5rem .8rem;margin-top:.4rem}
 .psel small{color:var(--muted);text-transform:capitalize}
 .psel b{color:var(--y);font:700 1.1rem 'Barlow Condensed',sans-serif}
+
+
+.brand-img{height:46px;width:auto;max-width:70%;object-fit:contain;align-self:flex-start}
+.avatar{overflow:hidden;flex-shrink:0}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-card{display:flex;align-items:center;gap:1rem}
+.pw{position:relative}
+.pw input{padding-right:3rem}
+.pw button{position:absolute;right:.3rem;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--muted);padding:.6rem;cursor:pointer;display:flex}
+.rules{list-style:none;margin:.2rem 0 .6rem;padding:0;font-size:.8rem;color:var(--muted)}
+.rules li{margin:.2rem 0}
+.rules li.ok{color:#7fdca1}
+.qbtn:disabled{opacity:.5}
+
+
+/* Perfil: encabezado horizontal */
+.prof-hero{display:flex;align-items:center;gap:1rem;background:var(--s1);border:1px solid var(--line);border-left:3px solid var(--y);border-radius:var(--r);padding:1rem;margin:.4rem 0 1rem}
+.ph-info{min-width:0}
+.ph-info h1{font-size:1.6rem;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ph-info p{margin:0;color:var(--y);font-weight:600;font-size:.9rem}
+.ph-info small{color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis}
+
+/* Datos rápidos */
+.qstats{margin-bottom:.4rem}
+.qs{flex:0 0 96px;scroll-snap-align:start;background:var(--s1);border:1px solid var(--line);border-radius:var(--r);padding:.7rem .8rem;display:flex;flex-direction:column;align-items:flex-start}
+.qs small{color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:.62rem}
+.qs b{font:800 2rem/1.1 'Barlow Condensed',sans-serif;color:var(--y)}
+.qs span{color:var(--muted);font-size:.72rem}
+.qs.hl{flex-basis:120px;background:#17150a;border-color:var(--y)}
+
+/* Títulos de sección */
+.sec-t{margin:1.5rem 0 .2rem;padding-left:.7rem;border-left:4px solid var(--y)}
+
+/* Módulos en horizontal */
+.mod-h{flex:0 0 150px;scroll-snap-align:start;display:flex;flex-direction:column;gap:.25rem;background:var(--s1);border:1px solid var(--line);border-radius:var(--r);padding:1rem;text-decoration:none;color:var(--text)}
+.mod-h b{font:700 1.15rem 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.04em}
+.mod-h small{color:var(--muted);font-size:.74rem;line-height:1.3;min-height:2.4em}
+.mod-h .mod-icon{color:var(--y)}
+.mod-h .status{align-self:flex-start}
+
+/* Secciones plegables */
+.acc{background:var(--s1);border:1px solid var(--line);border-radius:var(--r);margin:.6rem 0;overflow:hidden}
+.acc.open{border-color:#4a4210}
+.acc-h{display:flex;align-items:center;gap:.8rem;width:100%;background:none;border:0;color:var(--text);padding:.9rem 1rem;cursor:pointer;font-family:inherit;text-align:left}
+.acc-ic{width:38px;height:38px;flex-shrink:0;border-radius:8px;background:var(--s2);color:var(--y);display:grid;place-items:center}
+.acc-t{flex:1;min-width:0}
+.acc-t b{display:block;font-size:.98rem}
+.acc-t small{display:block;color:var(--muted);font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-h>svg{color:var(--muted);flex-shrink:0}
+.acc-b{padding:.2rem 1rem 1rem;border-top:1px solid var(--line)}
+.acc-b .card{background:none;border:0;padding:0;margin:.5rem 0 0}
+.acc-b .card>h3{display:none}
+.acc-b .stats{margin-top:.6rem}
+
+
+/* Nutrición */
+.tabs.t3{grid-template-columns:repeat(3,1fr)}
+.nrow{display:flex;justify-content:space-between;align-items:center;font-size:.92rem;margin-bottom:.3rem}
+.nrow b{color:var(--y)}
+.entry{display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem}
+.etime{width:62px;flex-shrink:0;text-align:center}
+.etime b{display:block;font:700 1.3rem 'Barlow Condensed',sans-serif;color:var(--y)}
+.etime small{color:var(--muted);font-size:.66rem;text-transform:uppercase;letter-spacing:.05em}
+.chkline{display:flex;gap:.7rem;align-items:flex-start;margin:1rem 0 .4rem;font-size:.88rem;color:#d0d0d0}
+.chkline input{width:20px;height:20px;margin:.1rem 0 0;accent-color:var(--y);flex-shrink:0}
+.option b{display:block;margin-bottom:.15rem}
+.mealc{flex:0 0 86%;max-width:330px;scroll-snap-align:start;background:var(--s1);border:1px solid var(--line);border-top:3px solid var(--y);border-radius:var(--r);padding:1rem;display:flex;flex-direction:column;gap:.5rem}
+.mealc h3{margin:0}
+.nopt{background:var(--s2);border:1px solid var(--line);border-radius:8px;padding:.7rem;display:flex;flex-direction:column;gap:.4rem;align-items:flex-start}
+.nopt>b{font-size:.9rem;line-height:1.3}
+.macros{display:grid;grid-template-columns:1fr 1fr;gap:.25rem .8rem;width:100%;font-size:.78rem;color:var(--muted)}
+.macros b{color:var(--y);font-size:.95rem}
+.cal-head button:disabled{opacity:.3}
+
+
+.tabs.t4{grid-template-columns:repeat(4,1fr)}
+.tabs.t4 button{font-size:.68rem;padding:.75rem .2rem}
+
+/* Foto de comida */
+.upbox{display:flex;flex-direction:column;align-items:center;gap:.3rem;width:100%;margin:.4rem 0;padding:1.6rem 1rem;background:var(--s1);border:1.5px dashed var(--line);border-radius:var(--r);color:var(--y);cursor:pointer;font-family:inherit}
+.upbox b{color:var(--text)} .upbox small{color:var(--muted)}
+.mphoto{margin:.4rem 0}
+.mphoto img{width:100%;max-height:260px;object-fit:cover;border-radius:var(--r);display:block;border:1px solid var(--line);margin-bottom:.5rem}
+.ethumb{width:64px;height:64px;object-fit:cover;border-radius:8px;display:block;flex-shrink:0}
+.frow{display:flex;justify-content:space-between;align-items:center;gap:.6rem;width:100%;background:none;border:0;border-bottom:1px solid var(--line);color:var(--text);padding:.75rem 0;cursor:pointer;font-family:inherit;text-align:left}
+.frow:last-child{border-bottom:0}
+.frow small{color:var(--muted);font-size:.72rem;flex-shrink:0}
+
+/* Valoración */
+.vbox{display:flex;flex-direction:column;gap:.15rem;border-radius:var(--r);padding:.8rem 1rem;margin:.6rem 0;border-left:4px solid}
+.vbox b{font:700 1.4rem 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.04em}
+.vbox span{font-size:.78rem;opacity:.8}
+.vbox.equilibrado{background:#0f1a13;border-color:#3fae6a;color:#b8e6c8}
+.vbox.aceptable{background:#1c1805;border-color:var(--y);color:#efe2a0}
+.vbox.mejorable{background:#241810;border-color:#e0883a;color:#ffc9a0}
+.pill.v-equilibrado{background:#12281a;color:#7fdca1}
+.pill.v-aceptable{background:#2a2208;color:#ffd58a}
+.pill.v-mejorable{background:#2a1d12;color:#ffb27a}
+
+/* Recordatorios de comida */
+.rem{display:flex;align-items:center;gap:.5rem;padding:.6rem .8rem}
+.rem select,.rem input[type=time]{margin:0;width:auto;flex:1;padding:.6rem}
+.rem input[type=checkbox]{width:22px;height:22px;margin:0;accent-color:var(--y);flex:none}
+.remind-banner{position:fixed;top:.6rem;left:50%;transform:translateX(-50%);width:calc(100% - 1.2rem);max-width:410px;z-index:95;display:flex;align-items:center;gap:.7rem;background:var(--y);color:#000;border-radius:var(--r);padding:.7rem .9rem;box-shadow:0 8px 24px rgba(0,0,0,.6);font-size:.88rem;font-weight:500}
+.remind-banner span{flex:1}
+.remind-banner a{background:#000;color:#fff;border-radius:8px;padding:.45rem .8rem;text-decoration:none;font-weight:700;font-size:.8rem}
+.remind-banner button{background:none;border:0;font-size:1.4rem;line-height:1;cursor:pointer;color:#000}

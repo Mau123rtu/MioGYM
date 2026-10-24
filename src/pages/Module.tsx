@@ -9,6 +9,7 @@ import Icon from '../components/Icons'
 import { Library, AiBuilder } from './Library'
 import { BodyMap } from '../components/Body'
 import { useWorkout } from '../components/Workout'
+import Nutrition from './Nutrition'
 
 const META: Record<string, { db: string; title: string; cta: string }> = {
   ejercicios: { db: 'rutinas', title: 'Tu plan', cta: 'Completa tu perfil de rutinas' },
@@ -169,45 +170,6 @@ function Exercises({ plan }: { plan: Plan | null }) {
 }
 
 /* ---------------- NUTRICIÓN ---------------- */
-function Nutrition({ a }: { a: Answers }) {
-  const { profile } = useAuth()
-  const age = calcAge(profile?.birth_date ?? null)
-  const meals: Record<string, string> = {
-    '1-2': 'Con pocas comidas, haz que cada una sea completa: proteína, carbohidrato, verduras y una grasa saludable.',
-    '3': 'Desayuno, comida y cena, cada una con una porción de proteína y verduras.',
-    '4': 'Tres comidas principales y una colación con proteína (yogur, huevo, fruta con nueces).',
-    '5+': 'Reparte la comida en porciones moderadas y procura proteína en la mayoría de ellas.',
-    variable: 'Como tu horario cambia, define 2 o 3 comidas "ancla" que sí puedas cuidar cada día.',
-  }
-  const goal: Record<string, string> = {
-    masa: 'Para ganar masa muscular importa comer lo suficiente y mantener proteína constante.',
-    grasa: 'Para perder grasa, prioriza alimentos saciantes (proteína, fibra) y avanza gradualmente.',
-    mantener: 'Para mantener tu peso, busca regularidad y variedad.',
-    habitos: 'Para mejorar hábitos, cambia una cosa a la vez y hazla sostenible.',
-    rendimiento: 'Para rendir mejor, cuida la comida previa y posterior a entrenar.',
-  }
-  const time: Record<string, string> = {
-    '<15': 'Opciones rápidas: omelette con verduras, bowl de atún, yogur con avena y fruta.',
-    '15-30': 'Salteados, tacos de pollo o pescado a la plancha con ensalada, pasta integral con legumbres.',
-    '>30': 'Tienes margen para guisos, hornear verduras y cocinar legumbres.',
-    lotes: 'Cocina por lotes: arroz, legumbres y proteína para 3–4 días, y guárdalo en porciones.',
-    fuera: 'Fuera de casa, elige platos a la plancha o al horno, con verdura, y pide aderezos aparte.',
-  }
-  return (
-    <>
-      {age !== null && age < 18 && <div className="warn">Eres menor de edad: no aplicamos objetivos restrictivos de calorías. Consulta con un profesional de salud o nutrición.</div>}
-      {a.condicion === 'si' && <div className="warn">Indicaste una condición o indicación profesional. Sigue siempre esa indicación; estas sugerencias son generales.</div>}
-      {a.alergias === 'si' && <div className="urgent"><b>{a.alergias_tipo === 'alergia' ? 'Alergia' : a.alergias_tipo === 'intolerancia' ? 'Intolerancia' : 'Preferencia'}:</b> {a.alergias_detalle || 'sin detalle'}. {a.alergias_tipo === 'alergia' && 'Revisa siempre las etiquetas.'}</div>}
-      <div className="card"><h3>Tu enfoque</h3><p>{goal[a.objetivo]}</p></div>
-      <div className="card"><h3>Distribución de comidas</h3><p>{meals[a.comidas]}</p></div>
-      <div className="card"><h3>Preparación</h3><p>{time[a.tiempo]}</p></div>
-      <div className="card"><h3>Hidratación</h3>
-        <p>Tu estimación actual: {({ '<1': 'menos de 1 L', '1-2': '1 a 2 L', '2-3': '2 a 3 L', '>3': 'más de 3 L', nose: 'no lo sabes' } as Record<string, string>)[a.agua]}. Bebe a lo largo del día y activa el recordatorio de agua en Más → Cuenta.</p></div>
-      {a.presupuesto === 'cantidad' && <div className="card"><h3>Presupuesto</h3><p>{a.pres_monto} {a.pres_moneda} ({a.pres_periodo}) para {a.pres_personas || 1} persona(s). Legumbres, huevo, avena, arroz y verdura de temporada rinden mucho.</p></div>}
-      <p className="hint">No calculamos calorías ni macros automáticamente: eso requiere más datos (actividad, entrenamiento) y valoración profesional.</p>
-    </>
-  )
-}
 
 /* ---------------- LESIONES ---------------- */
 function Injuries({ a }: { a: Answers }) {
@@ -313,7 +275,7 @@ export default function Module() {
           {module === 'nutricion' && <Nutrition a={answers} />}
           {module === 'lesiones' && <Injuries a={answers} />}
           {module === 'suplementos' && <Supplements a={answers} />}
-          {module !== 'ejercicios' && <Link to={`/app/${module}/perfil`} className="btn">Editar mis respuestas</Link>}
+                    {module !== 'ejercicios' && module !== 'nutricion' && <Link to={`/app/${module}/perfil`} className="btn">Editar mis respuestas</Link>}
         </>
       )}
     </>
