@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { groupOf, type PlanDay } from '../lib/routine'
 import { howTo } from '../lib/exerciseInfo'
+import { buildWarmup, cardioRec, type CardioRec } from '../lib/warmup'
 import { BodyMap } from './Body'
 import Icon from './Icons'
 
@@ -39,12 +40,88 @@ const fmt = (s: number) => {
   return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`
 }
 
+/* ---------- Caminata final (opcional) ---------- */
+function Cooldown({ rec }: { rec: CardioRec }) {
+  const { session } = useAuth()
+  const [minutes, setMinutes] = useState(rec.suggested)
+  const [end, setEnd] = useState<number | null>(null)
+  const [now, setNow] = useState(Date.now())
+  const [walked, setWalked] = useState<number | null>(null)
+  const [hidden, setHidden] = useState(false)
+  const startedAt = useRef(0)
+
+  useEffect(() => {
+    if (end === null) return
+    const id = setInterval(() => setNow(Date.now()), 500)
+    return () => clearInterval(id)
+  }, [end])
+
+  // guarda la caminata con los segundos reales
+  const finish = async () => {
+    const sec = Math.min(Math.round((Date.now() - startedAt.current) / 1000), minutes * 60)
+    setEnd(null)
+    setWalked(sec)
+    if (sec >= 30) {
+      await supabase.from('walk_logs').insert({ user_id: session!.user.id, duration_sec: sec, mode: rec.mode })
+    }
+  }
+
+  const left = end !== null ? Math.max(0, Math.ceil((end - now) / 1000)) : 0
+  useEffect(() => {
+    if (end !== null && left === 0) { navigator.vibrate?.(400); finish() }
+  }, [left, end])
+
+  if (hidden) return null
+
+  return (
+    <div className="card cd">
+      <div className="cd-head">
+        <span className="cd-ic"><Icon name="walk" size={22} /></span>
+        <div><small>Opcional</small><h3>{rec.title}</h3></div>
+      </div>
+
+      {walked !== null ? (
+        <p style={{ margin: '.8rem 0 0' }}>
+          {walked >= 30
+            ? `Listo, caminaste ${Math.max(1, Math.round(walked / 60))} min. Quedó guardado en tu historial. Hidrátate y descansa.`
+            : 'La caminata fue muy corta, así que no se guardó. Cuando quieras, puedes intentarlo de nuevo.'}
+        </p>
+      ) : end !== null ? (
+        <>
+          <div className="timer" style={{ fontSize: '3.6rem' }}>{fmt(left)}</div>
+          <p className="hint" style={{ textAlign: 'center' }}>Camina a ritmo ligero. Si paras antes, se guarda el tiempo real.</p>
+          <button className="btn" onClick={finish}>Terminar caminata</button>
+        </>
+      ) : (
+        <>
+          <p className="hint" style={{ margin: '.7rem 0 .2rem' }}>¿Cuántos minutos? Sugerido para ti: {rec.suggested}</p>
+          <div>
+            {rec.options.map(m => (
+              <button key={m} className={`chipbtn${minutes === m ? ' on' : ''}`} onClick={() => setMinutes(m)}>{m} min</button>
+            ))}
+          </div>
+
+          <h4 className="cd-h">¿Por qué es bueno?</h4>
+          <ul className="cd-list">{rec.why.map((w, i) => <li key={i}>{w}</li>)}</ul>
+          <h4 className="cd-h">Cómo hacerlo</h4>
+          <ul className="cd-list">{rec.tips.map((w, i) => <li key={i}>{w}</li>)}</ul>
+
+          <button className="btn primary" onClick={() => { startedAt.current = Date.now(); setNow(Date.now()); setEnd(Date.now() + minutes * 60000) }}>
+            Empezar {minutes} min de {rec.mode === 'caminadora' ? 'caminadora' : 'caminata'}
+          </button>
+          <button className="link" onClick={() => setHidden(true)}>Hoy no, gracias</button>
+        </>
+      )}
+    </div>
+  )
+}
+
 function Session({ day, min, setMin, onClose }: {
   day: PlanDay; min: boolean; setMin: (b: boolean) => void; onClose: () => void
 }) {
-  const { session } = useAuth()
+  const { session, profile } = useAuth()
   const list = day.exercises
-  const [confirmExit, setConfirmExit] = useState(false)
+  const [phase, setPhase] = useState<'warm' | 'work'>('warm')
   const [ex, setEx] = useState(0)
   const [rows, setRows] = useState<Row[][]>(() =>
     list.map(e => Array.from({ length: e.sets }, () => ({ kg: '', reps: String(repsDefault(e.reps)), done: false }))))
@@ -57,31 +134,44 @@ function Session({ day, min, setMin, onClose }: {
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
   const [now, setNow] = useState(Date.now())
+  const [confirmExit, setConfirmExit] = useState(false)
+  const [skipAsk, setSkipAsk] = useState(false)
+  const [wChk, setWChk] = useState<Record<number, boolean>>({})
+  const [wEnd, setWEnd] = useState<number | null>(null)
+
+  const warm = useMemo(() => buildWarmup(day, profile?.training_place ?? null), [day, profile?.training_place])
+  const cardio = useMemo(() => cardioRec(profile?.training_place ?? null, profile?.goal ?? null), [profile?.training_place, profile?.goal])
 
   const t0 = useRef(Date.now())
   const lastTick = useRef(Date.now())
   const exSec = useRef<Record<string, number>>({})
   const exRef = useRef(0)
+  const phaseRef = useRef<'warm' | 'work'>('warm')
   const logsSaved = useRef(false)
+  const warmBeeped = useRef(false)
   exRef.current = ex
+  phaseRef.current = phase
 
+   // Fin del cronómetro del calentamiento: empieza el entrenamiento solo
   useEffect(() => {
-    supabase.from('workout_logs').select('exercise,weight_kg,reps').order('logged_at', { ascending: false }).limit(300)
-      .then(({ data }) => {
-        const m: Record<string, { kg: number; reps: number | null }> = {}
-        data?.forEach(l => { if (!(l.exercise in m) && Number(l.weight_kg) > 0) m[l.exercise] = { kg: Number(l.weight_kg), reps: l.reps } })
-        setLast(m)
-      })
-  }, [])
+    if (wEnd !== null && now >= wEnd && !warmBeeped.current) {
+      warmBeeped.current = true
+      navigator.vibrate?.(400)
+      t0.current = Date.now()
+      lastTick.current = Date.now()
+      setPhase('work')
+      window.scrollTo(0, 0)
+    }
+  }, [now, wEnd])
 
-  // Cronómetro: tiempo total y tiempo por ejercicio
+  // Reloj general: el tiempo por ejercicio solo cuenta durante el entrenamiento (no el calentamiento)
   useEffect(() => {
     if (done) return
     lastTick.current = Date.now()
     const id = setInterval(() => {
       const n = Date.now()
       const name = list[exRef.current]?.name
-      if (name) exSec.current[name] = (exSec.current[name] ?? 0) + (n - lastTick.current) / 1000
+      if (phaseRef.current === 'work' && name) exSec.current[name] = (exSec.current[name] ?? 0) + (n - lastTick.current) / 1000
       lastTick.current = n
       setNow(n)
     }, 500)
@@ -93,13 +183,27 @@ function Session({ day, min, setMin, onClose }: {
     if (restEnd !== null && now >= restEnd) { navigator.vibrate?.(300); setRestEnd(null) }
   }, [now, restEnd])
 
+  // Fin del cronómetro del calentamiento
+  useEffect(() => {
+    if (wEnd !== null && now >= wEnd && !warmBeeped.current) { warmBeeped.current = true; navigator.vibrate?.(400) }
+  }, [now, wEnd])
+
   if (list.length === 0) return null
+
+  const startWork = () => {
+    t0.current = Date.now()
+    lastTick.current = Date.now()
+    setSkipAsk(false)
+    setPhase('work')
+    window.scrollTo(0, 0)
+  }
 
   const cur = list[ex]
   const curRows = rows[ex]
   const restSecs = restCfg[ex] ?? cur.rest
   const rest = restEnd !== null ? Math.max(0, Math.ceil((restEnd - now) / 1000)) : null
-  const elapsed = done ? done.sec : Math.floor((now - t0.current) / 1000)
+  const elapsed = done ? done.sec : phase === 'work' ? Math.floor((now - t0.current) / 1000) : 0
+  const warmLeft = wEnd !== null ? Math.max(0, Math.ceil((wEnd - now) / 1000)) : warm.totalSec
   const allDone = (i: number) => rows[i].length > 0 && rows[i].every(r => r.done)
   const totalSets = rows.reduce((a, r) => a + r.length, 0)
   const doneSets = rows.reduce((a, r) => a + r.filter(x => x.done).length, 0)
@@ -148,56 +252,82 @@ function Session({ day, min, setMin, onClose }: {
     setDone({ sec, sets: doneSets })
   }
 
-    const finishTop = () => {
+  const finishTop = () => {
     if (complete) { save(); return }
     setConfirmExit(true)
   }
 
-  const miniLabel = done ? 'Completado' : `Ejercicio ${ex + 1}/${list.length} · ${doneSets}/${totalSets} series`
+  const partName = day.name.split(' · ')[1] ?? day.name
+  const miniLabel = done ? 'Completado'
+    : phase === 'warm' ? 'Calentamiento'
+    : `Ejercicio ${ex + 1}/${list.length} · ${doneSets}/${totalSets} series`
+  const miniTime = phase === 'warm' && !done ? fmt(warmLeft) : fmt(rest ?? elapsed)
+  const wDone = warm.steps.filter((_, i) => wChk[i]).length
 
   return (
     <>
       {min && (
         <div className="wk-mini" role="button" onClick={() => setMin(false)}>
-          <span className="mini-circ"><Icon name="dumbbell" size={20} /></span>
-          <div className="mini-info"><b>{day.name.split(' · ')[1] ?? day.name}</b><small>{miniLabel}</small></div>
-          <span className="mini-time">{rest !== null ? <small>Desc. </small> : null}{fmt(rest ?? elapsed)}</span>
+          <span className="mini-circ"><Icon name={phase === 'warm' && !done ? 'flame' : 'dumbbell'} size={20} /></span>
+          <div className="mini-info"><b>{partName}</b><small>{miniLabel}</small></div>
+          <span className="mini-time">{rest !== null && phase === 'work' ? <small>Desc. </small> : null}{miniTime}</span>
           <Icon name="up" size={22} />
-          <i className="wk-prog" style={{ width: `${(doneSets / Math.max(1, totalSets)) * 100}%` }} />
-        </div>
-      )}
-
-        {confirmExit && (
-        <div className="dlg-bg" onClick={() => setConfirmExit(false)}>
-          <div className="dlg" role="alertdialog" aria-label="Rutina incompleta" onClick={e => e.stopPropagation()}>
-            <div className="dlg-ic"><Icon name="alert" size={28} /></div>
-            <h3>Rutina incompleta</h3>
-            <p>Si sales ahora, este entrenamiento <b>no se contará</b> ni se guardará en tu historial ni en tu racha.</p>
-            <div className="dlg-prog">
-              <div className="dlg-prog-top"><span>Tu avance</span><b>{doneSets}/{totalSets} series</b></div>
-              <div className="hbar"><i style={{ width: `${(doneSets / Math.max(1, totalSets)) * 100}%` }} /></div>
-            </div>
-            <button className="btn primary" onClick={() => setConfirmExit(false)}>Seguir entrenando</button>
-            <button className="btn dlg-out" onClick={() => { setConfirmExit(false); onClose() }}>Salir y descartar</button>
-          </div>
+          <i className="wk-prog" style={{ width: `${phase === 'warm' ? (wDone / warm.steps.length) * 100 : (doneSets / Math.max(1, totalSets)) * 100}%` }} />
         </div>
       )}
 
       <div className="wk-full" style={min ? { display: 'none' } : undefined}>
         {done ? (
-          <div className="card grad" style={{ textAlign: 'center', marginTop: '2rem' }}>
-            <div className="big-icon"><Icon name="check" size={44} /></div>
-            <h2>Entrenamiento completado</h2>
-            <p>{done.sets} series en {fmt(done.sec)}. Tu sesión quedó guardada. Descansa, hidrátate y come bien.</p>
+          <>
+            <div className="card grad" style={{ textAlign: 'center', marginTop: '1.2rem' }}>
+              <div className="big-icon"><Icon name="check" size={44} /></div>
+              <h2>Entrenamiento completado</h2>
+              <p>{done.sets} series en {fmt(done.sec)}. Tu sesión quedó guardada. Descansa, hidrátate y come bien.</p>
+            </div>
+            <Cooldown rec={cardio} />
             <button className="btn" onClick={onClose}>Cerrar</button>
-          </div>
-          
-          
-        ) 
-        
-        : (
+          </>
+        ) : phase === 'warm' ? (
+          <>
+            <div className="sess-top">
+              <button className="icon-btn" onClick={() => setMin(true)} aria-label="Minimizar"><Icon name="down" size={26} /></button>
+              <div className="wk-clock"><small>Calentamiento</small><span>{fmt(warmLeft)}</span></div>
+              <button className="finish-btn" onClick={onClose}>Salir</button>
+            </div>
 
-          
+            <h2 style={{ marginBottom: '.2rem' }}>Calienta antes de entrenar</h2>
+            <p className="hint" style={{ margin: 0 }}>Hoy toca: {warm.groups.join(' y ') || partName} · unos {Math.round(warm.totalSec / 60)} min</p>
+
+            <div className="card" style={{ marginTop: '.9rem' }}>
+              <h3>¿Por qué calentar?</h3>
+              <ul className="cd-list">
+                <li>Sube la temperatura de tus músculos y aumenta el flujo de sangre hacia ellos.</li>
+                <li>Prepara articulaciones y tendones para moverse en todo su recorrido, con mejor técnica.</li>
+                <li>Activa el sistema nervioso, así rindes mejor desde las primeras series.</li>
+                <li>Puede ayudar a reducir el riesgo de molestias y tirones, sobre todo con cargas altas.</li>
+              </ul>
+            </div>
+
+            <div className="card" style={{ padding: '.3rem 1rem' }}>
+              {warm.steps.map((s, i) => (
+                <button key={i} className={`wstep${wChk[i] ? ' on' : ''}`} onClick={() => setWChk(c => ({ ...c, [i]: !c[i] }))}>
+                  <span className="wchk">{wChk[i] ? <Icon name="check" size={16} /> : i + 1}</span>
+                  <span className="wtxt"><b>{s.name}</b><small>{s.detail}</small></span>
+                  <span className="wsec">{s.sec >= 60 ? `${Math.round(s.sec / 60 * 10) / 10} min` : `${s.sec} s`}</span>
+                </button>
+              ))}
+            </div>
+
+                       {wEnd === null ? (
+              <button className="btn primary" onClick={() => { warmBeeped.current = false; setNow(Date.now()); setWEnd(Date.now() + warm.totalSec * 1000) }}>
+                <Icon name="clock" size={16} /> Iniciar cronómetro ({Math.round(warm.totalSec / 60)} min)
+              </button>
+            ) : (
+              <div className="okbox">Calentando… el entrenamiento empezará solo cuando el cronómetro llegue a cero.</div>
+            )}
+            <button className="link" onClick={() => setSkipAsk(true)}>Saltar calentamiento</button>
+          </>
+        ) : (
           <>
             <div className="sess-top">
               <button className="icon-btn" onClick={() => setMin(true)} aria-label="Minimizar"><Icon name="down" size={26} /></button>
@@ -269,6 +399,40 @@ function Session({ day, min, setMin, onClose }: {
           </>
         )}
       </div>
+
+      {skipAsk && (
+        <div className="dlg-bg" onClick={() => setSkipAsk(false)}>
+          <div className="dlg" role="alertdialog" aria-label="Saltar calentamiento" onClick={e => e.stopPropagation()}>
+            <div className="dlg-ic"><Icon name="flame" size={28} /></div>
+            <h3>¿Saltar el calentamiento?</h3>
+            <p>Puedes hacerlo, pero entrenar en frío tiene desventajas:</p>
+            <ul className="cd-list" style={{ textAlign: 'left', margin: '0 0 1rem' }}>
+              <li>Músculos y articulaciones menos preparados, con más rigidez.</li>
+              <li>Menor rendimiento en las primeras series.</li>
+              <li>Puede aumentar el riesgo de molestias o tirones, sobre todo con cargas altas.</li>
+            </ul>
+            <p style={{ marginBottom: '.4rem' }}>Si decides saltarlo, haz al menos 1 o 2 series muy ligeras de tu primer ejercicio.</p>
+            <button className="btn primary" onClick={() => setSkipAsk(false)}>Hacer el calentamiento</button>
+            <button className="btn dlg-out" onClick={startWork}>Saltar de todos modos</button>
+          </div>
+        </div>
+      )}
+
+      {confirmExit && (
+        <div className="dlg-bg" onClick={() => setConfirmExit(false)}>
+          <div className="dlg" role="alertdialog" aria-label="Rutina incompleta" onClick={e => e.stopPropagation()}>
+            <div className="dlg-ic"><Icon name="alert" size={28} /></div>
+            <h3>Rutina incompleta</h3>
+            <p>Si sales ahora, este entrenamiento <b>no se contará</b> ni se guardará en tu historial ni en tu racha.</p>
+            <div className="dlg-prog">
+              <div className="dlg-prog-top"><span>Tu avance</span><b>{doneSets}/{totalSets} series</b></div>
+              <div className="hbar"><i style={{ width: `${(doneSets / Math.max(1, totalSets)) * 100}%` }} /></div>
+            </div>
+            <button className="btn primary" onClick={() => setConfirmExit(false)}>Seguir entrenando</button>
+            <button className="btn dlg-out" onClick={() => { setConfirmExit(false); onClose() }}>Salir y descartar</button>
+          </div>
+        </div>
+      )}
     </>
   )
 }

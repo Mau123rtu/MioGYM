@@ -28,6 +28,8 @@ const P: Record<string, ReactNode> = {
   swap: <path d="M7 7h12l-3-3M17 17H5l3 3" />,
     alert: <><path d="M12 3 2 20h20z" /><path d="M12 10v5M12 18h.01" /></>,
   calendar: <><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M4 10h16M9 3v4M15 3v4" /></>,
+    flame: <path d="M12 3c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-6 1-10z" />,
+  walk: <><circle cx="13" cy="4.5" r="1.8" /><path d="m10 21 2-6-2-3 1-4 3 2 2 3M8 12l3-4M12 15l3 2 1 4" /></>,
 }
 
 export default function Icon({ name, size = 22 }: { name: string; size?: number }) {

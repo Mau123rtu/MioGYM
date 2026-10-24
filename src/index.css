@@ -335,3 +335,43 @@ button.back{background:none;border:0;padding:0;font-family:inherit;cursor:pointe
 .dlg-prog-top b{color:var(--y)}
 .dlg .btn{margin-top:.6rem}
 .dlg-out{background:transparent;border-color:#5a2427;color:#ff9a9d}
+
+
+/* Calentamiento */
+.cd-list{margin:.3rem 0 0;padding-left:1.1rem;color:#bdbdbd;font-size:.88rem;line-height:1.5}
+.cd-list li{margin:.25rem 0}
+.wstep{display:flex;align-items:center;gap:.8rem;width:100%;background:none;border:0;border-bottom:1px solid var(--line);color:var(--text);padding:.8rem 0;cursor:pointer;font-family:inherit;text-align:left}
+.wstep:last-child{border-bottom:0}
+.wchk{width:30px;height:30px;flex-shrink:0;border-radius:8px;background:var(--s2);color:var(--y);display:grid;place-items:center;font-weight:700;font-size:.82rem}
+.wstep.on .wchk{background:var(--y);color:#000}
+.wstep.on .wtxt b{opacity:.55;text-decoration:line-through}
+.wtxt{flex:1;min-width:0}
+.wtxt b{display:block;font-size:.93rem}
+.wtxt small{display:block;color:var(--muted);font-size:.78rem;line-height:1.35;margin-top:.1rem}
+.wsec{flex-shrink:0;color:var(--muted);font-size:.74rem}
+
+/* Caminata final */
+.cd{border-top:3px solid var(--y)}
+.cd-head{display:flex;align-items:center;gap:.8rem}
+.cd-head h3{margin:0;font-size:1.2rem}
+.cd-head small{color:var(--y);text-transform:uppercase;letter-spacing:.1em;font-size:.65rem;font-weight:600}
+.cd-ic{width:42px;height:42px;border-radius:50%;background:var(--s2);color:var(--y);display:grid;place-items:center;flex-shrink:0}
+.cd-h{font:700 .78rem 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:1rem 0 0}
+
+
+.tabs.sub{grid-template-columns:repeat(5,1fr)}
+.tabs.sub button{font-size:.6rem;padding:.7rem .1rem;letter-spacing:.01em}
+
+
+/* Ejercicios en cuadrícula de 2 */
+.egrid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:.6rem 0}
+.etile{display:flex;flex-direction:column;align-items:flex-start;gap:.15rem;text-align:left;background:var(--s1);border:1px solid var(--line);border-top:3px solid var(--y);border-radius:var(--r);padding:.8rem;color:var(--text);cursor:pointer;font-family:inherit}
+.etile b{font-size:.9rem;line-height:1.25;min-height:2.5em}
+.etile small{color:var(--muted);font-size:.74rem}
+.etile .pill{margin-top:.5rem}
+
+/* Gráfica de progreso */
+.pchart{width:100%;height:auto;display:block;margin-top:.4rem}
+.psel{display:flex;justify-content:space-between;align-items:center;background:var(--s2);border:1px solid var(--line);border-radius:8px;padding:.5rem .8rem;margin-top:.4rem}
+.psel small{color:var(--muted);text-transform:capitalize}
+.psel b{color:var(--y);font:700 1.1rem 'Barlow Condensed',sans-serif}
