@@ -10,6 +10,7 @@ import Questionnaire from './pages/Questionnaire'
 import More from './pages/More'
 import Account from './pages/Account'
 import Layout from './components/Layout'
+import Terms from './pages/Terms'
 
 function Private({ children }: { children: ReactNode }) {
   const { session, profile, loading } = useAuth()
@@ -34,7 +35,7 @@ export default function App() {
           <Route path="/" element={<Public><Landing /></Public>} />
           <Route path="/login" element={<Public><Login /></Public>} />
           <Route path="/registro" element={<Onboarding />} />
-
+          <Route path="/terminos" element={<Terms />} />
           <Route path="/app" element={<Private><Layout /></Private>}>
             <Route index element={<Home />} />
             <Route path="mas" element={<More />} />

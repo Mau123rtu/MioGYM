@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { calcAge } from '../lib/utils'
 import { toArr, type Answers } from '../lib/questionnaires'
 import { groupOf, planProgress, regenerateRoutine, type Plan, type PlanDay } from '../lib/routine'
 import Icon from '../components/Icons'
@@ -10,6 +9,9 @@ import { Library, AiBuilder } from './Library'
 import { BodyMap } from '../components/Body'
 import { useWorkout } from '../components/Workout'
 import Nutrition from './Nutrition'
+import Supplements from './Supplements'
+import Prevention, { InjuryBanner, InjuryBlock } from './Prevention'
+import { useInjury } from '../lib/injury'
 
 const META: Record<string, { db: string; title: string; cta: string }> = {
   ejercicios: { db: 'rutinas', title: 'Tu plan', cta: 'Completa tu perfil de rutinas' },
@@ -18,7 +20,7 @@ const META: Record<string, { db: string; title: string; cta: string }> = {
   suplementos: { db: 'suplementos', title: 'Suplementos', cta: 'Completa tu perfil de suplementos' },
 }
 
-const URGENT = 'Si sientes dolor en el pecho, desmayo o dificultad importante para respirar, detén el ejercicio y busca atención médica urgente.'
+
 
 /* ---------------- EJERCICIOS ---------------- */
 const MUSCLE: Record<string, string> = {
@@ -52,6 +54,8 @@ function Exercises({ plan }: { plan: Plan | null }) {
   const [screen, setScreen] = useState<'plan' | 'library' | 'ai'>('plan')
   const { session, profile } = useAuth()
   const { start } = useWorkout()
+  const inj = useInjury()
+  if (inj.summary.mode === 'blocked') return <InjuryBlock s={inj.summary} />
 
   const go = (v: number | null) => { setView(v); window.scrollTo(0, 0) }
 
@@ -62,7 +66,11 @@ function Exercises({ plan }: { plan: Plan | null }) {
   }
 
   if (!plan) return <p className="hint">Aún no se pudo generar tu rutina.</p>
-  if (plan.days.length === 0) return <>{plan.warnings.map((w, i) => <div key={i} className="urgent">{w}</div>)}</>
+  if (plan.days.length === 0) return <>{plan.warnings.map((w, i) => <div key={i} className="urgent">{w}</div>)}
+        <InjuryBanner s={inj.summary} />
+  </>
+
+  
 
   if (screen === 'library') return <Library onBack={() => setScreen('plan')} onStart={d => start(d)} />
   if (screen === 'ai') return <AiBuilder onBack={() => setScreen('plan')} onSaved={() => setScreen('library')} onAdopted={() => window.location.reload()} />
@@ -172,63 +180,7 @@ function Exercises({ plan }: { plan: Plan | null }) {
 /* ---------------- NUTRICIÓN ---------------- */
 
 /* ---------------- LESIONES ---------------- */
-function Injuries({ a }: { a: Answers }) {
-  const zones = toArr(a.zonas)
-  const want = (k: string) => toArr(a.mejorar).some(x => x === k || x === 'todo')
-  return (
-    <>
-      {a.alarma === 'si' && <div className="urgent"><b>Importante:</b> {URGENT} No entrenes hasta que un profesional te valore.</div>}
-      {a.dolor === 'si' && (
-        <div className="warn">
-          Zonas con molestia: {zones.map(z => <span className="tag" key={z}>{z}</span>)}
-          <p>Tu rutina evita ejercicios que carguen esas zonas. {(a.intensidad === 'intenso' || toArr(a.situaciones).includes('reposo')) && 'Como el dolor es intenso o aparece en reposo, te recomendamos una valoración profesional.'}</p>
-        </div>
-      )}
-      <div className="card"><h3>Calentamiento general (5–8 min)</h3>
-        <p className="hint">1) 3–5 min de cardio ligero · 2) círculos de hombros, cadera y tobillos · 3) sentadilla sin peso × 10 · 4) 1–2 series ligeras del primer ejercicio.</p>
-        {(a.calentamiento === 'directo' || a.calentamiento === 'ninguno') && <p>Notamos que empiezas sin calentar: probar esto antes de entrenar reduce riesgos evitables.</p>}</div>
-      {want('tecnica') && <div className="card"><h3>Técnica</h3><p className="hint">Controla la bajada, mantén la espalda neutra, no rebotes y detén la serie cuando la técnica se rompa.</p></div>}
-      {want('movilidad') && <div className="card"><h3>Movilidad</h3><p className="hint">Dedica 5 min a cadera, hombros y tobillos tras entrenar o en días de descanso.</p></div>}
-      {want('cargas') && <div className="card"><h3>Progresión gradual</h3><p className="hint">Sube el peso o las repeticiones solo cuando completes todas las series con buena técnica, y no más de un pequeño ajuste por semana.</p></div>}
-      {want('errores') && <div className="card"><h3>Errores frecuentes</h3><p className="hint">Saltarse el calentamiento, usar demasiado peso, entrenar con dolor agudo y no descansar.</p></div>}
-      <div className="urgent">{URGENT}</div>
-      <p className="hint">Esta sección no diagnostica lesiones. Ante dolor persistente, consulta a un profesional sanitario.</p>
-    </>
-  )
-}
 
-/* ---------------- SUPLEMENTOS ---------------- */
-const SUPS = [
-  { n: 'Creatina monohidratada', ev: 'Es de los suplementos con mejor evidencia para fuerza y masa muscular.', dose: 'Se ha estudiado 3–5 g al día.', risk: 'Puede retener algo de agua. Consulta con tu médico si tienes enfermedad renal.' },
-  { n: 'Proteína en polvo', ev: 'Es una forma práctica de completar la proteína total del día; no es obligatoria.', dose: 'Importa la ingesta diaria total, no una toma concreta.', risk: 'Revisa la etiqueta: edulcorantes, lactosa y alérgenos.' },
-  { n: 'Cafeína', ev: 'Puede mejorar el rendimiento y la sensación de energía.', dose: 'Hasta unos 400 mg al día se considera límite habitual en adultos sanos.', risk: 'Evítala o consulta si tienes ansiedad, hipertensión, problemas de sueño o embarazo.' },
-  { n: 'Vitaminas y minerales', ev: 'Útiles si hay una deficiencia confirmada o una dieta restrictiva.', dose: 'Depende de análisis y valoración profesional.', risk: 'Tomar de más puede ser perjudicial.' },
-]
-function Supplements({ a }: { a: Answers }) {
-  const { profile } = useAuth()
-  const age = calcAge(profile?.birth_date ?? null)
-  const info = toArr(a.info)
-  const showDose = info.includes('dosis')
-  return (
-    <>
-      {age !== null && age < 18 && <div className="warn">Al ser menor de edad, consulta con un médico antes de usar cualquier suplemento.</div>}
-      {(a.medicacion === 'si') && <div className="warn">Indicaste medicamentos o una indicación médica. Antes de usar cualquier suplemento, consulta a tu médico o farmacéutico por posibles interacciones.</div>}
-      {toArr(a.actuales).filter(x => x !== 'ninguno').length > 0 && <div className="card"><h3>Lo que usas hoy</h3>{toArr(a.actuales).map(x => <span className="tag" key={x}>{x}</span>)}{a.detalle && <p className="hint">{a.detalle}</p>}</div>}
-      <div className="card"><h3>Primero lo básico</h3><p className="hint">Una buena alimentación, entrenamiento y sueño pesan mucho más que cualquier suplemento. No necesitas consumirlos para lograr tu objetivo.</p></div>
-      {SUPS.map(s => (
-        <div className="card" key={s.n}>
-          <h3>{s.n}</h3>
-          <p>{s.ev}</p>
-          {showDose && <p className="hint"><b>Dosis estudiadas:</b> {s.dose}</p>}
-          <p className="hint"><b>Precauciones:</b> {s.risk}</p>
-        </div>
-      ))}
-      {info.includes('etiquetas') && <div className="card"><h3>Cómo leer una etiqueta</h3><p className="hint">Revisa la cantidad real del ingrediente activo por toma, los alérgenos y si evita "mezclas propietarias". Un sello de certificación independiente ayuda, pero no garantiza que sea adecuado para ti.</p></div>}
-      {a.pres_monto && <p className="hint">Tu presupuesto: {a.pres_monto}. Úsalo para comparar precio por porción, no para decidir qué necesitas.</p>}
-      <p className="hint">Información educativa; no sustituye la orientación de un médico o dietista.</p>
-    </>
-  )
-}
 
 /* ---------------- PÁGINA ---------------- */
 export default function Module() {
@@ -264,7 +216,9 @@ export default function Module() {
   return (
     <>
       <h1>{meta.title}</h1>
-      {!answers ? (
+            {module === 'lesiones' ? (
+        <Prevention a={answers ?? {}} />
+      ) : !answers ? (
         <Link to={`/app/${module}/perfil`} className="cta">
           {meta.cta} para personalizar tus recomendaciones
           <small>Toma unos minutos · Tus respuestas son privadas</small>
@@ -273,9 +227,8 @@ export default function Module() {
         <>
           {module === 'ejercicios' && <Exercises plan={plan} />}
           {module === 'nutricion' && <Nutrition a={answers} />}
-          {module === 'lesiones' && <Injuries a={answers} />}
           {module === 'suplementos' && <Supplements a={answers} />}
-                    {module !== 'ejercicios' && module !== 'nutricion' && <Link to={`/app/${module}/perfil`} className="btn">Editar mis respuestas</Link>}
+          {module !== 'ejercicios' && module !== 'nutricion' && <Link to={`/app/${module}/perfil`} className="btn">Editar mis respuestas</Link>}
         </>
       )}
     </>

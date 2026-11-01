@@ -7,6 +7,9 @@ import { groupOf, planProgress, type Plan, type PlanDay } from '../lib/routine'
 import Icon from '../components/Icons'
 import { CalendarModal, useTrainingData } from '../components/Streak'
 import Avatar from '../components/Avatar'
+import { InjuryBanner, InjuryBlock } from './Prevention'
+import { useInjury } from '../lib/injury'
+import Coach from '../components/Coach'
 
 
 const MUSCLE: Record<string, string> = {
@@ -27,12 +30,13 @@ export default function Home() {
   const name = profile?.full_name ?? profile?.username ?? ''
   const training = useTrainingData()
   const [showCal, setShowCal] = useState(false)
+  const inj = useInjury()
+  const pr = plan && plan.days.length > 0 && inj.summary.mode !== 'blocked' ? planProgress(plan) : null
 
   useEffect(() => {
     supabase.from('routines').select('plan').maybeSingle().then(({ data }) => setPlan(data?.plan ?? null))
   }, [])
 
-  const pr = plan && plan.days.length > 0 ? planProgress(plan) : null
   const order: number[] = []
   if (pr) {
     for (let k = 0; k < 7; k++) {
@@ -71,6 +75,8 @@ export default function Home() {
       
       {showCal && <CalendarModal data={training} onClose={() => setShowCal(false)} />}
       <h2 className="section">Tu rutina</h2>
+      {inj.summary.mode === 'blocked' && <InjuryBlock s={inj.summary} />}
+      <InjuryBanner s={inj.summary} />
       {plan && plan.warnings.length > 0 && plan.days.length === 0 && <div className="urgent">{plan.warnings[0]}</div>}
 
       {pr ? (
@@ -91,6 +97,8 @@ export default function Home() {
             })}
           </div>
           <Link to="/app/ejercicios" className="btn primary">Ir a mis rutinas</Link>
+
+          
         </>
       ) : !plan && (
         <Link to="/app/ejercicios/perfil" className="cta">
@@ -98,6 +106,8 @@ export default function Home() {
           <small>Crearemos tu rutina semanal</small>
         </Link>
       )}
+
+            <Coach plan={plan} inj={inj.summary} />
     </>
   )
 }

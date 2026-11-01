@@ -44,6 +44,7 @@ export default function Landing() {
       <div>
         <Link to="/registro" className="btn primary">Registrarse</Link>
         <Link to="/login" className="link">Ya tengo cuenta</Link>
+          <Link to="/terminos" className="link">Términos y condiciones</Link>
       </div>
     </div>
   )

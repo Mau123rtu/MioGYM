@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import Icon from './Icons'
 import { WorkoutProvider, useWorkout } from './Workout'
 import MealReminderWatcher from './MealReminderWatcher'
+import TermsGate from './TermsGate'
 
 const tabs = [
   { to: '/app', end: true, icon: 'home', label: 'Inicio' },
@@ -13,6 +14,7 @@ const tabs = [
 ]
 
 function Shell() {
+  
   const { day, min } = useWorkout()
 
   
@@ -20,6 +22,7 @@ function Shell() {
     
       <div className={`app${day && min ? ' has-mini' : ''}`}>
       <MealReminderWatcher />
+      <TermsGate />
       <main className="content"><Outlet /></main>
       <nav className="bottom-nav">
         {tabs.map(t => (
@@ -29,6 +32,8 @@ function Shell() {
         ))}
       </nav>
     </div>
+
+    
 
     
   )

@@ -6,17 +6,23 @@ import { howTo } from '../lib/exerciseInfo'
 import { buildWarmup, cardioRec, type CardioRec } from '../lib/warmup'
 import { BodyMap } from './Body'
 import Icon from './Icons'
+import { Link, useNavigate } from 'react-router-dom'
+import { PainSlider } from '../pages/InjuryCheck'
+import { loadsZone, painAdvice, suggestKg, useInjury, ZONE_LABEL } from '../lib/injury'
 
 interface Ctx { day: PlanDay | null; min: boolean; start: (d: PlanDay) => void }
 const WorkoutCtx = createContext<Ctx>({ day: null, min: false, start: () => {} })
 export const useWorkout = () => useContext(WorkoutCtx)
 
 export function WorkoutProvider({ children }: { children: ReactNode }) {
+  const inj = useInjury()
+  const [blockedMsg, setBlockedMsg] = useState(false)
   const [day, setDay] = useState<PlanDay | null>(null)
   const [min, setMin] = useState(false)
   const [run, setRun] = useState(0)
 
   const start = (d: PlanDay) => {
+    if (inj.summary.mode === 'blocked') { setBlockedMsg(true); return }
     if (day && !window.confirm('Ya tienes un entrenamiento en curso. ¿Quieres descartarlo y empezar este?')) {
       setMin(false)
       return
@@ -28,7 +34,19 @@ export function WorkoutProvider({ children }: { children: ReactNode }) {
     <WorkoutCtx.Provider value={{ day, min, start }}>
       {children}
       {day && <Session key={run} day={day} min={min} setMin={setMin} onClose={() => { setDay(null); setMin(false) }} />}
+              {blockedMsg && (
+        <div className="dlg-bg" onClick={() => setBlockedMsg(false)}>
+          <div className="dlg" role="alertdialog" onClick={e => e.stopPropagation()}>
+            <div className="dlg-ic"><Icon name="shield" size={28} /></div>
+            <h3>Rutinas bloqueadas</h3>
+            <p>Por tu molestia, tus rutinas están bloqueadas. Revisa tu estado en Prevención.</p>
+            <Link to="/app/lesiones" className="btn primary" onClick={() => setBlockedMsg(false)}>Ir a Prevención</Link>
+            <button className="link" onClick={() => setBlockedMsg(false)}>Cerrar</button>
+          </div>
+        </div>
+      )}
     </WorkoutCtx.Provider>
+    
   )
 }
 
@@ -129,7 +147,7 @@ function Session({ day, min, setMin, onClose }: {
   const [restEnd, setRestEnd] = useState<number | null>(null)
   const [notes, setNotes] = useState<Record<number, string>>({})
   const [showNote, setShowNote] = useState(false)
-  const [last, setLast] = useState<Record<string, { kg: number; reps: number | null }>>({})
+  const [last] = useState<Record<string, { kg: number; reps: number | null }>>({})
   const [done, setDone] = useState<{ sec: number; sets: number } | null>(null)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
@@ -138,6 +156,10 @@ function Session({ day, min, setMin, onClose }: {
   const [skipAsk, setSkipAsk] = useState(false)
   const [wChk, setWChk] = useState<Record<number, boolean>>({})
   const [wEnd, setWEnd] = useState<number | null>(null)
+  const inj = useInjury()
+  const nav = useNavigate()
+  const [painDlg, setPainDlg] = useState(false)
+  const [painVal, setPainVal] = useState(3)
 
   const warm = useMemo(() => buildWarmup(day, profile?.training_place ?? null), [day, profile?.training_place])
   const cardio = useMemo(() => cardioRec(profile?.training_place ?? null, profile?.goal ?? null), [profile?.training_place, profile?.goal])
@@ -200,7 +222,9 @@ function Session({ day, min, setMin, onClose }: {
 
   const cur = list[ex]
   const curRows = rows[ex]
-  const restSecs = restCfg[ex] ?? cur.rest
+  const loads = inj.summary.mode !== 'free' && loadsZone(cur.name, inj.summary.zones)
+  const bonus = loads ? inj.summary.restBonus : 0
+  const restSecs = restCfg[ex] ?? (cur.rest + bonus)
   const rest = restEnd !== null ? Math.max(0, Math.ceil((restEnd - now) / 1000)) : null
   const elapsed = done ? done.sec : phase === 'work' ? Math.floor((now - t0.current) / 1000) : 0
   const warmLeft = wEnd !== null ? Math.max(0, Math.ceil((wEnd - now) / 1000)) : warm.totalSec
@@ -346,6 +370,14 @@ function Session({ day, min, setMin, onClose }: {
 
             <BodyMap pcts={g ? { [g]: 100 } : {}} max={100} only={g === 'espalda' ? 'back' : 'front'} compact />
 
+                        {loads && (
+              <div className="warn">
+                <b>Cuidado con tu {inj.summary.zones.map(z => (ZONE_LABEL[z] ?? z).toLowerCase()).join(', ')}.</b> Este ejercicio la carga: usa cerca del {Math.round(inj.summary.loadFactor * 100)}% de tu carga habitual
+                {last[cur.name] ? ` (unos ${suggestKg(last[cur.name].kg, inj.summary.loadFactor)} kg en lugar de ${last[cur.name].kg} kg)` : ''}.
+                {' '}Descansa {bonus} s más entre series{inj.summary.setsLess > 0 ? ', haz una serie menos si te molesta' : ''} y para si el dolor pasa de {inj.summary.painStop}/10.
+              </div>
+            )}
+
             <h2 className="exname">{cur.name}</h2>
             <p className="howto">{howTo(cur.name)}</p>
 
@@ -355,7 +387,10 @@ function Session({ day, min, setMin, onClose }: {
                 <Icon name="clock" size={16} />Descanso {fmt(restSecs)}
               </button>
               <button className="qbtn" onClick={() => goTo((ex + 1) % list.length)}><Icon name="skip" size={16} />Saltar</button>
+
+                            <button className="qbtn" onClick={() => { setPainVal(3); setPainDlg(true) }}><Icon name="alert" size={16} />Me duele</button>
             </div>
+            
 
             {showNote && (
               <textarea placeholder="Tus notas para este ejercicio…" value={notes[ex] ?? ''}
@@ -430,6 +465,19 @@ function Session({ day, min, setMin, onClose }: {
             </div>
             <button className="btn primary" onClick={() => setConfirmExit(false)}>Seguir entrenando</button>
             <button className="btn dlg-out" onClick={() => { setConfirmExit(false); onClose() }}>Salir y descartar</button>
+          </div>
+        </div>
+      )}
+            {painDlg && (
+        <div className="dlg-bg" onClick={() => setPainDlg(false)}>
+          <div className="dlg" role="dialog" onClick={e => e.stopPropagation()}>
+            <div className="dlg-ic"><Icon name="alert" size={28} /></div>
+            <h3>¿Cuánto te duele?</h3>
+            <PainSlider value={painVal} onChange={setPainVal} />
+            <p style={{ marginTop: '.8rem' }}>{painAdvice(painVal)}</p>
+            {painVal < 7 && <button className="btn primary" onClick={() => setPainDlg(false)}>Seguir con cuidado</button>}
+            {painVal >= 4 && <button className="btn" onClick={() => { setPainDlg(false); goTo((ex + 1) % list.length) }}>Saltar este ejercicio</button>}
+            {painVal >= 6 && <button className="btn dlg-out" onClick={() => { setPainDlg(false); onClose(); nav('/app/lesiones') }}>Terminar y evaluar mi molestia</button>}
           </div>
         </div>
       )}

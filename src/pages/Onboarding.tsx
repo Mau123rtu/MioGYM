@@ -6,6 +6,7 @@ import { lbToKg, ftInToCm } from '../lib/utils'
 import { Link } from 'react-router-dom'
 import PasswordField from '../components/PasswordField'
 import { checkPassword } from '../lib/password'
+import { TERMS_VERSION } from './../lib/terms'
 
 const GOALS = [
   ['masa', 'Ganar masa muscular'], ['grasa', 'Perder grasa corporal'], ['fuerza', 'Ganar fuerza'],
@@ -38,6 +39,7 @@ export default function Onboarding() {
   const [step, setStep] = useState(session ? 1 : 0)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+    const [terms, setTerms] = useState(false)
 
   const [f, setF] = useState({
     email: '', username: '', password: '',
@@ -51,7 +53,7 @@ export default function Onboarding() {
 
   const canNext = (): boolean => {
     switch (step) {
-      case 0: return /\S+@\S+\.\S+/.test(f.email) && f.username.trim().length >= 3
+            case 0: return /\S+@\S+\.\S+/.test(f.email) && f.username.trim().length >= 3 && terms
         && checkPassword(f.password, { username: f.username, email: f.email }).valid
       case 1: return f.name.trim().length > 0
       case 2: return !!f.birth && new Date(f.birth) < new Date()
@@ -65,14 +67,16 @@ export default function Onboarding() {
     }
   }
 
-  const createAccount = async () => {
+    const createAccount = async () => {
     const { data, error } = await supabase.auth.signUp({
       email: f.email.trim(),
       password: f.password,
-      options: { data: { username: f.username.trim() } }, // el trigger lo guarda en profiles
+      options: { data: { username: f.username.trim() } },
     })
     if (error) throw error
     if (!data.session) throw new Error('Desactiva "Confirm email" en Supabase (Authentication → Providers → Email) para continuar.')
+    await supabase.from('profiles')
+      .update({ terms_accepted_at: new Date().toISOString(), terms_version: TERMS_VERSION }).eq('id', data.user!.id)
   }
 
   const finish = async () => {
@@ -125,12 +129,17 @@ export default function Onboarding() {
           <input placeholder="Usuario (mín. 3 caracteres)" value={f.username} onChange={e => set('username', e.target.value)} autoComplete="username" />
           <PasswordField value={f.password} onChange={v => set('password', v)} showRules
             ctx={{ username: f.username, email: f.email }} autoComplete="new-password" />
+            
+                      <label className="chkline">
+            <input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} />
+            <span>He leído y acepto los <Link to="/terminos" target="_blank" rel="noreferrer">Términos y condiciones</Link> y la política de privacidad.</span>
+          </label>
         </>
       )}
 
       {step === 1 && (<>
         <h2>¿Cómo te llamas?</h2>
-        <input placeholder="Tu nombre" value={f.name} onChange={e => set('name', e.target.value)} autoFocus />
+        <input placeholder="Tu nombre completo" value={f.name} onChange={e => set('name', e.target.value)} autoFocus />
       </>)}
 
       {step === 2 && (<>

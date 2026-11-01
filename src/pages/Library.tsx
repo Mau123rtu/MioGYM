@@ -55,6 +55,7 @@ function Builder({ initial, onCancel, onSaved }: { initial: Saved | null; onCanc
   const [q, setQ] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const [openDay, setOpenDay] = useState<number | null>(null)
 
   const results = useMemo(() => CATALOG.filter(e =>
     (!group || e.g === group) &&
@@ -243,6 +244,7 @@ export function AiBuilder({ onBack, onSaved, onAdopted }: { onBack: () => void; 
   const [focus, setFocus] = useState<G[]>([])
   const [seed, setSeed] = useState(0)
   const [res, setRes] = useState<AiResult | null>(null)
+  const [openDay, setOpenDay] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
@@ -260,7 +262,7 @@ export function AiBuilder({ onBack, onSaved, onAdopted }: { onBack: () => void; 
 
   if (!ready) return <p className="center">Cargando...</p>
 
-  const run = (s: number) => { if (profile) setRes(generateAi({ profile, rut, inj, days, focus, seed: s })); window.scrollTo(0, 0) }
+    const run = (s: number) => { setOpenDay(null); if (profile) setRes(generateAi({ profile, rut, inj, days, focus, seed: s })); window.scrollTo(0, 0) }
   const toggleFocus = (g: G) => setFocus(f => (f.includes(g) ? f.filter(x => x !== g) : [...f, g]))
 
   const swap = (di: number, k: number) => {
@@ -329,19 +331,38 @@ export function AiBuilder({ onBack, onSaved, onAdopted }: { onBack: () => void; 
           <p className="hint">Puedes cambiar cualquier ejercicio con <Icon name="swap" size={14} />. Mientras no pulses "Usar como mi plan semanal", esto es solo una propuesta y tu plan no cambia.</p>
           {msg && <div className="warn">{msg}</div>}
 
-          {res.days.map((d, i) => (
-            <div className="card" key={i}>
-              <h3>{d.name}</h3>
-              <div>{d.groups.map(g => <span className="tag" key={g}>{MUSCLE[g]}</span>)}</div>
-              {d.exercises.map((e, k) => (
-                <div className="exrow" key={`${e.name}-${k}`}>
-                  <span className="n">{k + 1}</span>
-                  <div style={{ flex: 1 }}><b>{e.name}</b><small>{e.sets} series × {e.reps} · descanso {e.rest} s</small></div>
-                  <button className="mini-ic" onClick={() => swap(i, k)} aria-label="Cambiar ejercicio"><Icon name="swap" size={16} /></button>
+                    <div className="dgrid">
+            {res.days.map((d, i) => (
+              <button key={i} className="dtile" onClick={() => setOpenDay(i)}>
+                <span className="dnum">{i + 1}</span>
+                <b>{d.name}</b>
+                <small>{d.exercises.length} ejercicios</small>
+                <div>{d.groups.slice(0, 3).map(g => <span className="tag" key={g}>{MUSCLE[g]}</span>)}</div>
+                <span className="dgo">Ver lista <Icon name="chevron" size={14} /></span>
+              </button>
+            ))}
+          </div>
+
+          {openDay !== null && res.days[openDay] && (
+            <div className="modal-bg" onClick={() => setOpenDay(null)}>
+              <div className="modal" onClick={e => e.stopPropagation()} role="dialog" aria-label={res.days[openDay].name}>
+                <div className="modal-top">
+                  <h2 style={{ margin: 0 }}>{res.days[openDay].name}</h2>
+                  <button className="mini-ic" onClick={() => setOpenDay(null)} aria-label="Cerrar"><Icon name="x" size={18} /></button>
                 </div>
-              ))}
+                <div>{res.days[openDay].groups.map(g => <span className="tag" key={g}>{MUSCLE[g]}</span>)}</div>
+                {msg && <div className="warn">{msg}</div>}
+                {res.days[openDay].exercises.map((e, k) => (
+                  <div className="exrow" key={`${e.name}-${k}`}>
+                    <span className="n">{k + 1}</span>
+                    <div style={{ flex: 1 }}><b>{e.name}</b><small>{e.sets} series × {e.reps} · descanso {e.rest} s</small></div>
+                    <button className="mini-ic" onClick={() => swap(openDay, k)} aria-label="Cambiar ejercicio"><Icon name="swap" size={16} /></button>
+                  </div>
+                ))}
+                <button className="btn" onClick={() => setOpenDay(null)}>Cerrar</button>
+              </div>
             </div>
-          ))}
+          )}
 
           {err && <p className="error">{err}</p>}
           <button className="btn primary" disabled={busy} onClick={adopt}>Usar como mi plan semanal</button>
@@ -353,3 +374,4 @@ export function AiBuilder({ onBack, onSaved, onAdopted }: { onBack: () => void; 
     </>
   )
 }
+

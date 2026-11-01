@@ -16,6 +16,8 @@ export interface Profile {
   onboarding_completed: boolean
   sex: string | null
   avatar_url: string | null
+    terms_accepted_at: string | null
+  terms_version: string | null
 }
 
 interface Ctx {

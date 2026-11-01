@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { calcAge, calcBMI } from '../lib/utils'
 import Reminders from '../components/Reminders'
 import Icon from '../components/Icons'
-import Avatar from '../components/Avatar'
+import AvatarEditor from '../components/AvatarEditor'
+import ProgressPhotos from '../components/ProgressPhotos'
+import Measurements from '../components/Measurements'
 import PasswordField from '../components/PasswordField'
 import { checkPassword } from '../lib/password'
 
@@ -19,25 +21,8 @@ const PLACE: Record<string, string> = {
 }
 const MIN_DAYS: Record<string, number> = { '1-2': 1, '3-4': 3, '5-6': 5, '7': 7 }
 
-const MODS = [
-  { slug: 'ejercicios', db: 'rutinas', icon: 'dumbbell', title: 'Rutinas', text: 'Ejercicios, series y progresión' },
-  { slug: 'nutricion', db: 'nutricion', icon: 'food', title: 'Nutrición', text: 'Comidas y estimaciones' },
-  { slug: 'lesiones', db: 'lesiones', icon: 'shield', title: 'Prevención', text: 'Técnica y precauciones' },
-  { slug: 'suplementos', db: 'suplementos', icon: 'pill', title: 'Suplementos', text: 'Información y seguridad' },
-]
-
 interface WeightLog { id: number; weight_kg: number; logged_at: string }
 interface WorkoutLog { exercise: string; weight_kg: number; logged_at: string }
-
-async function toSquareJpeg(file: File, size = 400): Promise<Blob> {
-  const bmp = await createImageBitmap(file)
-  const s = Math.min(bmp.width, bmp.height)
-  const c = document.createElement('canvas')
-  c.width = c.height = size
-  c.getContext('2d')!.drawImage(bmp, (bmp.width - s) / 2, (bmp.height - s) / 2, s, s, 0, 0, size, size)
-  return new Promise((res, rej) =>
-    c.toBlob(b => (b ? res(b) : rej(new Error('No se pudo procesar la imagen'))), 'image/jpeg', 0.85))
-}
 
 /** Sección plegable con resumen */
 function Section({ id, icon, title, summary, open, onToggle, children }: {
@@ -65,12 +50,8 @@ export default function Account() {
   const [height, setHeight] = useState(String(profile?.height_cm ?? ''))
   const [wlogs, setWlogs] = useState<WeightLog[]>([])
   const [logs, setLogs] = useState<WorkoutLog[]>([])
-  const [done, setDone] = useState<string[]>([])
   const [msg, setMsg] = useState('')
 
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [photoMsg, setPhotoMsg] = useState('')
-  const [busyPhoto, setBusyPhoto] = useState(false)
   const [curPw, setCurPw] = useState('')
   const [newPw, setNewPw] = useState('')
   const [newPw2, setNewPw2] = useState('')
@@ -82,8 +63,6 @@ export default function Account() {
     setWlogs((w.data as WeightLog[]) ?? [])
     const l = await supabase.from('workout_logs').select('exercise,weight_kg,logged_at').order('logged_at', { ascending: true }).limit(1000)
     setLogs((l.data as WorkoutLog[]) ?? [])
-    const m = await supabase.from('module_profiles').select('module')
-    setDone((m.data ?? []).map(d => d.module))
   }
   useEffect(() => { load() }, [])
 
@@ -101,36 +80,6 @@ export default function Account() {
   const setSex = async (s: 'hombre' | 'mujer') => {
     await supabase.from('profiles').update({ sex: s }).eq('id', session!.user.id)
     await refreshProfile()
-  }
-
-  const onPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]
-    e.target.value = ''
-    if (!f) return
-    if (!f.type.startsWith('image/')) { setPhotoMsg('Elige un archivo de imagen.'); return }
-    if (f.size > 15 * 1024 * 1024) { setPhotoMsg('La imagen pesa demasiado (máximo 15 MB).'); return }
-    setBusyPhoto(true); setPhotoMsg('')
-    try {
-      const uid = session!.user.id
-      const path = `${uid}/avatar.jpg`
-      const up = await supabase.storage.from('avatars').upload(path, await toSquareJpeg(f), { upsert: true, contentType: 'image/jpeg' })
-      if (up.error) throw up.error
-      const url = `${supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl}?v=${Date.now()}`
-      const { error } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', uid)
-      if (error) throw error
-      await refreshProfile()
-      setPhotoMsg('Foto actualizada')
-    } catch (err: any) {
-      setPhotoMsg(err.message ?? 'No se pudo subir la foto. Prueba con JPG o PNG.')
-    } finally { setBusyPhoto(false) }
-  }
-
-  const removePhoto = async () => {
-    const uid = session!.user.id
-    await supabase.storage.from('avatars').remove([`${uid}/avatar.jpg`])
-    await supabase.from('profiles').update({ avatar_url: null }).eq('id', uid)
-    await refreshProfile()
-    setPhotoMsg('Foto eliminada')
   }
 
   const changePassword = async () => {
@@ -170,55 +119,34 @@ export default function Account() {
     <>
       <Link to="/app/mas" className="back">← Volver</Link>
 
-      {/* Encabezado horizontal */}
+      {/* Tarjeta principal: nombre y datos personales */}
       <div className="prof-hero">
-        <Avatar size={78} />
+        <AvatarEditor size={78} />
         <div className="ph-info">
           <h1>{name}</h1>
           <p>@{profile?.username}</p>
           <small>{session?.user.email}</small>
         </div>
       </div>
+      <div className="prof-tags">
+        {age !== null && <span className="tag">{age} años</span>}
+        <span className="tag">{GOAL[profile?.goal ?? ''] ?? '-'}</span>
+        <span className="tag">{LEVEL[profile?.experience ?? ''] ?? '-'}</span>
+        <span className="tag">{profile?.days_per_week ?? '-'} días/sem</span>
+        <span className="tag">{PLACE[profile?.training_place ?? ''] ?? '-'}</span>
+      </div>
 
-      {/* Datos rápidos en horizontal */}
+      {/* Datos principales en horizontal */}
       <div className="hscroll qstats">
-        <div className="qs"><small>Edad</small><b>{age ?? '–'}</b><span>años</span></div>
         <div className="qs"><small>Peso</small><b>{profile?.weight_kg ?? '–'}</b><span>kg</span></div>
-        <div className="qs"><small>Altura</small><b>{profile?.height_cm ?? '–'}</b><span>cm</span></div>
         <div className="qs hl"><small>IMC</small><b>{bmi?.value ?? '–'}</b><span>{bmi?.label ?? ''}</span></div>
+        <div className="qs"><small>Adherencia</small><b>{adherence}%</b><span>esta semana</span></div>
+        <div className="qs"><small>Entrenos</small><b>{allDays.size}</b><span>registrados</span></div>
       </div>
 
-      {/* Módulos en horizontal */}
-      <h3 className="sec-t">Mis módulos</h3>
-      <div className="hscroll">
-        {MODS.map(m => {
-          const ok = done.includes(m.db)
-          return (
-            <Link key={m.slug} to={ok ? `/app/${m.slug}` : `/app/${m.slug}/perfil`} className="mod-h">
-              <span className="mod-icon"><Icon name={m.icon} size={26} /></span>
-              <b>{m.title}</b>
-              <small>{m.text}</small>
-              <span className={ok ? 'status ok' : 'status'}>{ok ? 'Personalizado' : 'Completar perfil'}</span>
-            </Link>
-          )
-        })}
-      </div>
-
-      {/* Secciones plegables */}
       <h3 className="sec-t">Mi cuenta</h3>
 
-      <Section id="datos" icon="user" title="Datos personales"
-        summary={`${GOAL[profile?.goal ?? ''] ?? '-'} · ${LEVEL[profile?.experience ?? ''] ?? '-'}`}
-        open={openId === 'datos'} onToggle={toggle}>
-        <div className="kv">
-          <div><small>Objetivo</small><b>{GOAL[profile?.goal ?? ''] ?? '-'}</b></div>
-          <div><small>Experiencia</small><b>{LEVEL[profile?.experience ?? ''] ?? '-'}</b></div>
-          <div><small>Días por semana</small><b>{profile?.days_per_week ?? '-'}</b></div>
-          <div><small>Lugar</small><b>{PLACE[profile?.training_place ?? ''] ?? '-'}</b></div>
-        </div>
-      </Section>
-
-      <Section id="medidas" icon="scale" title="Peso y altura"
+      <Section id="medidas" icon="weight" title="Peso y altura"
         summary={`${profile?.weight_kg ?? '–'} kg · ${profile?.height_cm ?? '–'} cm`}
         open={openId === 'medidas'} onToggle={toggle}>
         <div className="row">
@@ -232,23 +160,22 @@ export default function Account() {
         {msg && <p className="hint">{msg}</p>}
       </Section>
 
+      <Section id="cuerpo" icon="tape" title="Medidas corporales" summary="Brazo, pierna, cintura, cadera y pecho"
+        open={openId === 'cuerpo'} onToggle={toggle}>
+        <Measurements />
+      </Section>
+
       <Section id="foto" icon="camera" title="Foto y figura"
-        summary={`Figura: ${profile?.sex === 'mujer' ? 'Mujer' : profile?.sex === 'hombre' ? 'Hombre' : 'sin elegir'}`}
+        summary={`Figura: ${profile?.sex === 'mujer' ? 'Mujer' : profile?.sex === 'hombre' ? 'Hombre' : 'sin elegir'} · fotos de progreso`}
         open={openId === 'foto'} onToggle={toggle}>
-        <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
-        <div className="row">
-          <button className="qbtn" disabled={busyPhoto} onClick={() => fileRef.current?.click()}>
-            <Icon name="camera" size={16} />{busyPhoto ? 'Subiendo…' : 'Cambiar foto'}
-          </button>
-          {profile?.avatar_url && <button className="qbtn" onClick={removePhoto}><Icon name="trash" size={16} />Quitar</button>}
-        </div>
-        {photoMsg && <p className="hint">{photoMsg}</p>}
-        <p className="hint" style={{ margin: '1rem 0 .3rem' }}>Figura del muñeco (distribución muscular y rutinas)</p>
-        <div className="tabs" style={{ marginBottom: 0 }}>
+        <p className="hint" style={{ margin: '.4rem 0 .3rem' }}>Figura del muñeco (distribución muscular y rutinas)</p>
+        <div className="tabs" style={{ marginBottom: '.6rem' }}>
           {(['hombre', 'mujer'] as const).map(s => (
             <button key={s} className={profile?.sex === s ? 'on' : ''} onClick={() => setSex(s)}>{s === 'hombre' ? 'Hombre' : 'Mujer'}</button>
           ))}
         </div>
+        <h4 className="ph">Fotos de progreso</h4>
+        <ProgressPhotos />
       </Section>
 
       <Section id="progreso" icon="chart" title="Seguimiento del progreso"

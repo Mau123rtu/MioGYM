@@ -482,3 +482,113 @@ button.back{background:none;border:0;padding:0;font-family:inherit;cursor:pointe
 .remind-banner span{flex:1}
 .remind-banner a{background:#000;color:#fff;border-radius:8px;padding:.45rem .8rem;text-decoration:none;font-weight:700;font-size:.8rem}
 .remind-banner button{background:none;border:0;font-size:1.4rem;line-height:1;cursor:pointer;color:#000}
+
+
+/* Suplementos */
+.vbox.ok{background:#0f1a13;border-color:#3fae6a;color:#b8e6c8}
+.vbox.caution{background:#1c1805;border-color:var(--y);color:#efe2a0}
+.vbox.avoid{background:#210f10;border-color:#e5484d;color:#ffb4b6}
+.pill.v-ok{background:#12281a;color:#7fdca1}
+.pill.v-caution{background:#2a2208;color:#ffd58a}
+.pill.v-avoid{background:#2a1517;color:#ff9a9d}
+.flag-avoid{color:#ff9a9d}
+.flag-caution{color:#ffd58a}
+.sc{flex:0 0 170px;scroll-snap-align:start;background:var(--s1);border:1px solid var(--line);border-top:3px solid var(--y);border-radius:var(--r);padding:.9rem;display:flex;flex-direction:column;align-items:flex-start;gap:.4rem}
+.sc b{font-size:.95rem;line-height:1.25;min-height:2.5em}
+.sitem{display:flex;align-items:center;gap:.8rem;width:100%;color:var(--text);cursor:pointer;font-family:inherit}
+.irow{display:grid;grid-template-columns:1fr 70px 68px 34px;gap:.4rem;align-items:center}
+.irow input,.irow select{margin:.2rem 0;padding:.65rem .5rem;font-size:.9rem}
+.dlg select,.dlg input{margin:.3rem 0}
+
+
+/* Prevención */
+.stack{display:flex;flex-direction:column;gap:.1rem;margin-top:.4rem}
+.pain{margin:.4rem 0}
+.pain-num{display:flex;align-items:baseline;gap:.5rem}
+.pain-num b{font:800 3rem/1 'Barlow Condensed',sans-serif;color:var(--y)}
+.pain-num span{color:var(--muted);font-size:.85rem}
+.pain input[type=range]{padding:0;border:0;background:none;accent-color:var(--y);height:34px;margin:.2rem 0}
+.pain-scale{display:flex;justify-content:space-between;color:var(--muted)}
+.dlg textarea{margin:.3rem 0}
+
+
+
+/* Foto de perfil clicable */
+.av-btn{border-radius:50%;border:2px solid var(--y);background:var(--s2);padding:0;overflow:hidden;cursor:pointer;flex-shrink:0;color:var(--y);display:grid;place-items:center}
+.av-btn img{width:100%;height:100%;object-fit:cover;display:block}
+.av-empty{display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1}
+.av-empty small{font-size:.55rem;color:var(--text);text-transform:uppercase;letter-spacing:.04em}
+.av-btn:disabled{opacity:.6}
+.toast{position:fixed;top:.8rem;left:50%;transform:translateX(-50%);z-index:120;background:var(--y);color:#000;border-radius:var(--r);padding:.6rem 1rem;font-size:.85rem;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+
+/* Visor de imágenes */
+.viewer{position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:1rem}
+.viewer-in{width:100%;max-width:400px;max-height:100%;overflow-y:auto}
+.viewer-in img{width:100%;max-height:62vh;object-fit:contain;border-radius:var(--r);display:block;background:#000}
+
+/* Contenido dentro de secciones plegables */
+.pbox{background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:.9rem;margin:.6rem 0}
+.ph{font:700 1.05rem 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.05em;margin:.2rem 0 .3rem}
+.hscroll.in{margin:.6rem -1rem 0;padding:0 1rem .6rem}
+
+/* Tarjetas de medidas y semanas */
+.mcard{flex:0 0 168px;scroll-snap-align:start;background:var(--s2);border:1px solid var(--line);border-top:3px solid var(--y);border-radius:var(--r);padding:.8rem;display:flex;flex-direction:column;gap:.3rem;align-items:flex-start}
+.mcard>small{color:var(--muted);font-size:.72rem}
+.mcard>small:first-child{text-transform:uppercase;letter-spacing:.08em;font-size:.66rem}
+.mcard b{font:800 1.9rem/1 'Barlow Condensed',sans-serif;color:var(--y)}
+.mcard b span{font:500 .72rem 'Inter',sans-serif;color:var(--muted)}
+.mcard .hbar{width:100%}
+.mhint{color:#7fdca1!important}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem .6rem}
+.mhist{display:flex;align-items:center;gap:.6rem;padding:.6rem 0;border-bottom:1px solid var(--line)}
+
+/* Galería y comparación */
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-top:.3rem}
+.pthumb{background:var(--s2);border:1px solid var(--line);border-radius:8px;padding:0;overflow:hidden;cursor:pointer;color:var(--text);display:flex;flex-direction:column}
+.pthumb img,.pthumb>span{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;background:var(--s1)}
+.pthumb small{font-size:.65rem;padding:.3rem;color:var(--muted)}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.6rem 0}
+.cmp figure{margin:0}
+.cmp button{width:100%;padding:0;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--s1);cursor:pointer;display:block}
+.cmp img,.cmp button>span{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
+.cmp figcaption{display:flex;flex-direction:column;align-items:center;margin-top:.3rem}
+.cmp figcaption small{color:var(--muted);font-size:.72rem}
+
+
+/* Diálogo por encima del visor de fotos */
+.dlg-bg.top{z-index:130}
+
+/* Etiquetas debajo del nombre */
+.prof-hero{margin-bottom:.3rem}
+.prof-tags{margin:0 0 1rem}
+
+
+
+/* Tu ayudante */
+.coach-c{flex:0 0 80%;max-width:310px;scroll-snap-align:start;background:var(--s1);border:1px solid var(--line);border-top:3px solid var(--y);border-radius:var(--r);padding:1rem;display:flex;flex-direction:column;gap:.35rem;align-items:flex-start}
+.coach-c.ok{border-top-color:#3fae6a}
+.coach-c.warn{border-top-color:#e5484d}
+.coach-c b{font:700 1.15rem 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.04em}
+.coach-c p{margin:0;color:#c8c8c8;font-size:.86rem;line-height:1.45}
+.coach-c .hbar{width:100%}
+.coach-c .btn-ver{text-decoration:none;display:inline-block;margin-top:.3rem}
+.coach-ic{width:36px;height:36px;border-radius:50%;background:var(--s2);color:var(--y);display:grid;place-items:center}
+.coach-c.ok .coach-ic{color:#7fdca1}
+.coach-c.warn .coach-ic{color:#ff9a9d}
+
+/* Rutinas de IA: días como cuadros */
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:.6rem 0}
+.dtile{position:relative;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:.25rem;text-align:left;background:var(--s1);border:1px solid var(--line);border-top:3px solid var(--y);border-radius:var(--r);padding:.9rem;color:var(--text);cursor:pointer;font-family:inherit;overflow:hidden}
+.dtile .dnum{position:absolute;top:.4rem;right:.8rem;font:800 3rem/1 'Barlow Condensed',sans-serif;color:var(--line)}
+.dtile b{font:700 1.2rem/1.1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.04em}
+.dtile small{color:var(--muted)}
+.dgo{color:var(--y);font-size:.74rem;display:flex;align-items:center;gap:.2rem;margin-top:.3rem}
+
+/* Términos */
+.terms section{margin-bottom:1rem}
+.terms h4{font:700 1.05rem 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--y);margin:.8rem 0 .3rem}
+.terms p{color:#c8c8c8;font-size:.88rem;line-height:1.55;margin:.3rem 0}
+.terms-dlg{max-width:430px;text-align:left}
+.terms-dlg h3{text-align:center}
+.terms-scroll{max-height:42vh;overflow-y:auto;background:var(--s2);border:1px solid var(--line);border-radius:8px;padding:.2rem .9rem;margin-bottom:.4rem}
+.chkline a{color:var(--y);text-decoration:underline}
