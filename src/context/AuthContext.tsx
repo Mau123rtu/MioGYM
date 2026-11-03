@@ -35,9 +35,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const loadProfile = async (userId: string) => {
+    const loadProfile = async (userId: string) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
-    setProfile(data as Profile | null)
+    if (data) {
+      setProfile(data as Profile)
+      localStorage.setItem('miogym-profile', JSON.stringify(data))
+      return
+    }
+    // sin internet: usa el último perfil guardado de esta misma cuenta
+    try {
+      const c = JSON.parse(localStorage.getItem('miogym-profile') ?? 'null')
+      if (c?.id === userId) setProfile(c as Profile)
+    } catch { /* nada */ }
   }
 
   useEffect(() => {
@@ -46,10 +55,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.session) await loadProfile(data.session.user.id)
       setLoading(false)
     })
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+        const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s)
       if (s) loadProfile(s.user.id)
-      else setProfile(null)
+      else {
+        setProfile(null)
+        localStorage.removeItem('miogym-profile')
+        if ('caches' in window) caches.delete('supabase-api')   // no dejar datos de salud en el dispositivo
+      }
     })
     return () => sub.subscription.unsubscribe()
   }, [])

@@ -6,6 +6,7 @@ import { toArr, type Answers } from '../lib/questionnaires'
 import Icon from '../components/Icons'
 import SupplementAdd from './SupplementAdd'
 import { KINDS, LEVEL_LABEL, analyzeItem, dayCheck, timingTips, type Ctx, type Kind, type SuppItem, type SuppLog, type Tip } from '../lib/suppDb'
+import { safeInsert } from '../lib/offline'
 
 const TIMINGS: [string, string][] = [
   ['pre', 'Antes de entrenar'], ['durante', 'Durante el entreno'], ['post', 'Después de entrenar'],
@@ -172,11 +173,11 @@ export default function Supplements({ a }: { a: Answers }) {
     const an = analyzeItem(take, ctx)
     const [h, m] = tTime.split(':').map(Number)
     const at = new Date(); at.setHours(h || 0, m || 0, 0, 0)
-    const { error } = await supabase.from('supplement_logs').insert({
+       const { error } = await safeInsert('supplement_logs', {
       user_id: session!.user.id, item_id: take.id, name: take.name, kind: take.kind,
       caffeine_mg: an.caffeine, servings: serv, timing: tTiming, taken_at: at.toISOString(),
     })
-    if (error) { setErr(error.message); return }
+    if (error) { setErr(error); return }
     const tips = timingTips(take.kind, an.caffeine, tTiming, h || 0)
     if (an.verdict === 'avoid') tips.unshift({ kind: 'warn', text: 'Este suplemento salió como "mejor evitarlo". Revisa su análisis antes de volver a tomarlo.' })
     else if (an.verdict === 'caution') tips.unshift({ kind: 'tip', text: 'Este suplemento requiere precauciones. Revisa su análisis.' })

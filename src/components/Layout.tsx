@@ -3,6 +3,7 @@ import Icon from './Icons'
 import { WorkoutProvider, useWorkout } from './Workout'
 import MealReminderWatcher from './MealReminderWatcher'
 import TermsGate from './TermsGate'
+import PwaStatus from './PwaStatus'
 
 const tabs = [
   { to: '/app', end: true, icon: 'home', label: 'Inicio' },
@@ -21,6 +22,8 @@ function Shell() {
   return (
     
       <div className={`app${day && min ? ' has-mini' : ''}`}>
+      <PwaStatus />
+      <TermsGate />
       <MealReminderWatcher />
       <TermsGate />
       <main className="content"><Outlet /></main>

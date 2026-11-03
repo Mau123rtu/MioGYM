@@ -10,6 +10,7 @@ import ProgressPhotos from '../components/ProgressPhotos'
 import Measurements from '../components/Measurements'
 import PasswordField from '../components/PasswordField'
 import { checkPassword } from '../lib/password'
+import { safeInsert } from '../lib/offline'
 
 const GOAL: Record<string, string> = {
   masa: 'Ganar masa muscular', grasa: 'Perder grasa', fuerza: 'Ganar fuerza',
@@ -72,7 +73,7 @@ export default function Account() {
     const uid = session!.user.id
     const { error } = await supabase.from('profiles').update({ weight_kg: w, height_cm: h }).eq('id', uid)
     if (error) { setMsg(error.message); return }
-    if (w !== profile?.weight_kg) await supabase.from('weight_logs').insert({ user_id: uid, weight_kg: w })
+        if (w !== profile?.weight_kg) await safeInsert('weight_logs', { user_id: uid, weight_kg: w, logged_at: new Date().toISOString() })
     await refreshProfile(); await load()
     setMsg('Datos actualizados')
   }

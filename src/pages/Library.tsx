@@ -55,7 +55,6 @@ function Builder({ initial, onCancel, onSaved }: { initial: Saved | null; onCanc
   const [q, setQ] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
-  const [openDay, setOpenDay] = useState<number | null>(null)
 
   const results = useMemo(() => CATALOG.filter(e =>
     (!group || e.g === group) &&
@@ -331,14 +330,20 @@ export function AiBuilder({ onBack, onSaved, onAdopted }: { onBack: () => void; 
           <p className="hint">Puedes cambiar cualquier ejercicio con <Icon name="swap" size={14} />. Mientras no pulses "Usar como mi plan semanal", esto es solo una propuesta y tu plan no cambia.</p>
           {msg && <div className="warn">{msg}</div>}
 
-                    <div className="dgrid">
+          <div className="dgrid">
             {res.days.map((d, i) => (
               <button key={i} className="dtile" onClick={() => setOpenDay(i)}>
                 <span className="dnum">{i + 1}</span>
                 <b>{d.name}</b>
                 <small>{d.exercises.length} ejercicios</small>
-                <div>{d.groups.slice(0, 3).map(g => <span className="tag" key={g}>{MUSCLE[g]}</span>)}</div>
-                <span className="dgo">Ver lista <Icon name="chevron" size={14} /></span>
+                <div>
+                  {d.groups.slice(0, 3).map(g => (
+                    <span className="tag" key={g}>{MUSCLE[g]}</span>
+                  ))}
+                </div>
+                <span className="dgo">
+                  Ver lista <Icon name="chevron" size={14} />
+                </span>
               </button>
             ))}
           </div>

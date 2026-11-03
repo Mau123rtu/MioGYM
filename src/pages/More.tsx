@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Icon from '../components/Icons'
+import InstallApp from '../components/InstallApp'
 
 export default function More() {
   return (
@@ -14,6 +15,8 @@ export default function More() {
                 <Link to="/terminos"><span className="ic"><Icon name="file" /></span>Términos y condiciones<i><Icon name="chevron" size={18} /></i></Link>
         <button onClick={() => supabase.auth.signOut()}><span className="ic"><Icon name="logout" /></span>Cerrar sesión</button>
       </div>
+      <h3 className="sec-t">Instalar</h3>
+      <InstallApp />
       <p className="hint">MioGym ofrece información general y no sustituye la valoración de un profesional de la salud.</p>
     </>
   )

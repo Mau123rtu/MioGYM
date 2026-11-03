@@ -8,6 +8,7 @@ import Icon from '../components/Icons'
 import MealPhoto from './MealPhoto'
 import MealReminders from '../components/MealReminders'
 import { VERDICT_LABEL, type VerdictKind } from '../lib/foodDb'
+import { safeInsert } from '../lib/offline'
 
 interface Entry {
   id: number; logged_at: string; meal: string; description: string
@@ -76,11 +77,11 @@ export default function Nutrition({ a }: { a: Answers }) {
   }, [entries])
 
   const addEntry = async (row: { meal: string; description: string; calories: number | null; protein_g: number | null; at: Date }) => {
-    const { error } = await supabase.from('food_logs').insert({
+        const { error } = await safeInsert('food_logs', {
       user_id: session!.user.id, meal: row.meal, description: row.description,
       calories: row.calories, protein_g: row.protein_g, logged_at: row.at.toISOString(),
     })
-    if (error) { setErr(error.message); return false }
+    if (error) { setErr(error); return false }
     return true
   }
 

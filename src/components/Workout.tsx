@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { groupOf, type PlanDay } from '../lib/routine'
 import { howTo } from '../lib/exerciseInfo'
@@ -9,6 +8,7 @@ import Icon from './Icons'
 import { Link, useNavigate } from 'react-router-dom'
 import { PainSlider } from '../pages/InjuryCheck'
 import { loadsZone, painAdvice, suggestKg, useInjury, ZONE_LABEL } from '../lib/injury'
+import { safeInsert } from '../lib/offline'
 
 interface Ctx { day: PlanDay | null; min: boolean; start: (d: PlanDay) => void }
 const WorkoutCtx = createContext<Ctx>({ day: null, min: false, start: () => {} })
@@ -80,7 +80,7 @@ function Cooldown({ rec }: { rec: CardioRec }) {
     setEnd(null)
     setWalked(sec)
     if (sec >= 30) {
-      await supabase.from('walk_logs').insert({ user_id: session!.user.id, duration_sec: sec, mode: rec.mode })
+            await safeInsert('walk_logs', { user_id: session!.user.id, duration_sec: sec, mode: rec.mode, created_at: new Date().toISOString() })
     }
   }
 
@@ -258,21 +258,22 @@ function Session({ day, min, setMin, onClose }: {
     setSaving(true); setErr('')
     const uid = session!.user.id
     const sec = Math.floor((Date.now() - t0.current) / 1000)
+        const stamp = new Date().toISOString()
     if (!logsSaved.current) {
       const logs = list.flatMap((e, i) => rows[i].filter(r => r.done).map(r => ({
-        user_id: uid, exercise: e.name, weight_kg: Number(r.kg) || 0, reps: Number(r.reps) || null,
+        user_id: uid, exercise: e.name, weight_kg: Number(r.kg) || 0, reps: Number(r.reps) || null, logged_at: stamp,
       })))
-      const a = await supabase.from('workout_logs').insert(logs)
-      if (a.error) { setErr(a.error.message); setSaving(false); return }
+      const a = await safeInsert('workout_logs', logs)
+      if (a.error) { setErr(a.error); setSaving(false); return }
       logsSaved.current = true
     }
     const exs: Record<string, number> = {}
     Object.entries(exSec.current).forEach(([k, v]) => { exs[k] = Math.round(v) })
-    const b = await supabase.from('workout_sessions').insert({
-      user_id: uid, day_name: day.name, sets_done: doneSets, duration_sec: sec, ex_seconds: exs,
+    const b = await safeInsert('workout_sessions', {
+      user_id: uid, day_name: day.name, sets_done: doneSets, duration_sec: sec, ex_seconds: exs, completed_at: stamp,
     })
     setSaving(false)
-    if (b.error) { setErr(b.error.message); return }
+    if (b.error) { setErr(b.error); return }
     setDone({ sec, sets: doneSets })
   }
 
