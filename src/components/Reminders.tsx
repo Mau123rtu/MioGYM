@@ -14,6 +14,7 @@ export default function Reminders() {
   const { session } = useAuth()
   const [water, setWater] = useState<Reminder>({ type: 'water', time_of_day: null, interval_minutes: 90, enabled: false })
   const [exercise, setExercise] = useState<Reminder>({ type: 'exercise', time_of_day: '18:00', interval_minutes: null, enabled: false })
+  const [perm, setPerm] = useState<string>('Notification' in window ? Notification.permission : 'unsupported')
 
   useEffect(() => {
     supabase.from('reminders').select('*').then(({ data }) => {
@@ -23,36 +24,12 @@ export default function Reminders() {
 
   const save = async (r: Reminder) => {
     if (r.enabled && 'Notification' in window && Notification.permission === 'default') {
-      await Notification.requestPermission()
+      setPerm(await Notification.requestPermission())
     }
+    if (r.type === 'water') localStorage.removeItem('miogym-water-last')   // reinicia la cuenta del agua
     await supabase.from('reminders').upsert({ ...r, user_id: session!.user.id }, { onConflict: 'user_id,type' })
+    window.dispatchEvent(new Event('reminders-changed'))
   }
-
-  const notify = (body: string) => {
-    if ('Notification' in window && Notification.permission === 'granted') new Notification('MioGym', { body })
-    else alert(body)
-  }
-
-  // Agua: cada X minutos mientras la app esté abierta
-  useEffect(() => {
-    if (!water.enabled || !water.interval_minutes) return
-    const t = setInterval(() => notify('Hora de tomar agua.'), water.interval_minutes * 60000)
-    return () => clearInterval(t)
-  }, [water.enabled, water.interval_minutes])
-
-  // Ejercicio: revisa cada 30 s si llegó la hora
-  useEffect(() => {
-    if (!exercise.enabled || !exercise.time_of_day) return
-    let last = ''
-    const t = setInterval(() => {
-      const hhmm = new Date().toTimeString().slice(0, 5)
-      if (hhmm === exercise.time_of_day!.slice(0, 5) && last !== hhmm) {
-        last = hhmm
-        notify('Es hora de entrenar.')
-      }
-    }, 30000)
-    return () => clearInterval(t)
-  }, [exercise.enabled, exercise.time_of_day])
 
   return (
     <div className="card">
@@ -72,12 +49,16 @@ export default function Reminders() {
       <label className="switch">
         <Icon name="dumbbell" size={20} /><span style={{ flex: 1 }}>Entrenar a las</span>
         <input type="time" value={exercise.time_of_day?.slice(0, 5) ?? '18:00'}
-          onChange={e => { const r = { ...exercise, time_of_day: e.target.value }; setExercise(r); save(r) }} />
+          onChange={e => { if (!e.target.value) return; const r = { ...exercise, time_of_day: e.target.value }; setExercise(r); save(r) }} />
         <input type="checkbox" checked={exercise.enabled}
           onChange={e => { const r = { ...exercise, enabled: e.target.checked }; setExercise(r); save(r) }} />
       </label>
 
-      <p className="hint">Los avisos suenan mientras la app esté abierta.</p>
+      {perm === 'default' && <button className="btn" onClick={async () => setPerm(await Notification.requestPermission())}>Activar notificaciones del navegador</button>}
+      {perm === 'denied' && <div className="warn">Las notificaciones están bloqueadas en tu navegador. Igual verás el aviso dentro de la app.</div>}
+
+      <button className="btn" onClick={() => window.dispatchEvent(new Event('reminder-test'))}>Probar aviso</button>
+      <p className="hint">El agua te avisa de 8:00 a 22:00. Los avisos suenan en cualquier pantalla, mientras la app esté abierta.</p>
     </div>
   )
 }

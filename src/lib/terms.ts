@@ -1,21 +1,21 @@
-export const TERMS_VERSION = '1.0'
+export const TERMS_VERSION = '3.2'
 export const TERMS_DATE = '31 de octubre de 2026'
-const OWNER = '[NOMBRE O RAZÓN SOCIAL DEL RESPONSABLE DE MIOGYM]'
-const EMAIL = '[CORREO DE CONTACTO]'
-const LAW = '[PAÍS Y ESTADO, p. ej. México, Puebla]'
+const OWNER = 'MioGym Technologies'
+const EMAIL = 'miogym@gmail.com'
+const LAW = 'Apizaco, Tlaxcala, México'
 
 export interface Section { title: string; body: string[] }
 
 export const TERMS: Section[] = [
   { title: '1. Aceptación', body: [
-    `Estos Términos y condiciones regulan el uso de MioGym ("la App"), ofrecida por ${OWNER}. Al crear una cuenta o usar la App declaras que los leíste y los aceptas.`,
+    `Estos Términos y condiciones regulan el uso de MioGym , ofrecida por ${OWNER}. Al crear una cuenta o usar la App declaras que los leíste y los aceptas.`,
     'Si no estás de acuerdo con alguna parte, no uses la App.' ] },
   { title: '2. Qué es MioGym', body: [
     'MioGym es una herramienta de apoyo para organizar tu entrenamiento, registrar tu alimentación y suplementos, recibir orientación sobre molestias físicas y seguir tu progreso.',
     'Todo el contenido es información general y educativa. No es un servicio médico, de nutrición, de fisioterapia ni de entrenamiento personal profesional.' ] },
   { title: '3. No es atención médica', body: [
     'La App no diagnostica enfermedades ni lesiones, y no sustituye la valoración de un médico, nutriólogo, fisioterapeuta u otro profesional de la salud.',
-    'La evaluación de molestias es una orientación basada en lo que tú indicas y puede equivocarse. El bloqueo o ajuste de tus rutinas es una medida de prudencia; si decides cambiarlo (por ejemplo, indicando una autorización médica o una falsa alarma), lo haces bajo tu responsabilidad.',
+    'La evaluación de molestias es una orientación basada en lo que tú indicas y puede equivocarse. El bloqueo o ajuste de tus rutinas es una medida de prudencia; si decides cambiarlo, lo haces bajo tu responsabilidad.',
     'Las calorías, los macronutrientes y otras cifras son estimaciones aproximadas.',
     'Ante una emergencia (dolor de pecho, falta de aire importante, desmayo, pérdida de control de la orina o las heces, golpe fuerte, deformidad), llama a los servicios de emergencia de tu país (en México, 911) o acude a urgencias.' ] },
   { title: '4. Tu salud y tu responsabilidad', body: [
@@ -24,12 +24,12 @@ export const TERMS: Section[] = [
     'Eres responsable de que los datos que registras sean verdaderos y estén actualizados, ya que las recomendaciones dependen de ellos.' ] },
   { title: '5. Edad', body: [
     'La App está pensada para personas de 18 años o más. Si eres menor de edad, solo puedes usarla con el conocimiento, el consentimiento y la supervisión de tu madre, padre o tutor.',
-    'Para menores, algunas funciones se limitan (por ejemplo, no se ofrecen objetivos de déficit calórico ni se recomiendan estimulantes).' ] },
+    'Para menores, algunas funciones se limitan.' ] },
   { title: '6. Tu cuenta', body: [
     'Debes proporcionar datos verdaderos y elegir una contraseña segura. Eres responsable de mantenerla confidencial y de la actividad realizada con tu cuenta.',
     `Si sospechas un uso no autorizado, avísanos de inmediato en ${EMAIL}.` ] },
   { title: '7. Tu contenido (fotos y datos)', body: [
-    'Las fotos que subes (perfil, comidas, etiquetas de suplementos y progreso corporal) y los datos que registras son tuyos. Por defecto son privados y solo tú los ves.',
+    'Las fotos que subes y los datos que registras son tuyos. Por defecto son privados y solo tú los ves.',
     'Nos autorizas a almacenarlos y procesarlos únicamente para ofrecerte las funciones de la App.',
     'No subas contenido ilegal, ofensivo, ni imágenes de otras personas sin su permiso. No subas fotos de menores de edad que no sean tuyas.' ] },
   { title: '8. Datos personales y privacidad', body: [
@@ -49,7 +49,7 @@ export const TERMS: Section[] = [
     'Las cargas, descansos y ejercicios sugeridos son orientativos. Aprende la técnica correcta y ajusta a cómo te sientes.',
     'La lista de ejercicios "sí", "con cuidado" y "evitar" según una molestia es una guía general y puede no ajustarse a tu caso.' ] },
   { title: '11. Recordatorios y notificaciones', body: [
-    'Los recordatorios pueden fallar o no llegar (por ejemplo, si la App está cerrada o tu dispositivo bloquea notificaciones). No dependas de ellos para asuntos de salud importantes.' ] },
+    'Los recordatorios pueden fallar o no llegar. No dependas de ellos para asuntos de salud importantes.' ] },
   { title: '12. Uso aceptable', body: [
     'No uses la App para fines ilegales, ni intentes acceder a cuentas o datos de otras personas, vulnerar su seguridad, interferir con su funcionamiento, ni copiarla o revenderla.' ] },
   { title: '13. Propiedad intelectual', body: [
@@ -62,7 +62,7 @@ export const TERMS: Section[] = [
   { title: '16. Suspensión y eliminación de cuenta', body: [
     `Puedes dejar de usar la App cuando quieras y solicitar la eliminación de tu cuenta y tus datos en ${EMAIL}. Podemos suspender o cerrar cuentas que incumplan estos términos.` ] },
   { title: '17. Cambios a estos términos', body: [
-    `Podemos actualizar estos términos. Indicaremos la versión y la fecha (actual: versión ${TERMS_VERSION}, ${TERMS_DATE}). Si el cambio es importante, te pediremos aceptarlos de nuevo para seguir usando la App.` ] },
+    `Podemos actualizar estos términos. Indicaremos la versión y la fecha. Si el cambio es importante, te pediremos aceptarlos de nuevo para seguir usando la App.` ] },
   { title: '18. Ley aplicable y contacto', body: [
     `Estos términos se rigen por las leyes de ${LAW}. Para cualquier duda o solicitud, escribe a ${EMAIL}.` ] },
 ]

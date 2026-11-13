@@ -154,8 +154,10 @@ function Session({ day, min, setMin, onClose }: {
   const [now, setNow] = useState(Date.now())
   const [confirmExit, setConfirmExit] = useState(false)
   const [skipAsk, setSkipAsk] = useState(false)
-  const [wChk, setWChk] = useState<Record<number, boolean>>({})
+  const [] = useState<Record<number, boolean>>({})
   const [wEnd, setWEnd] = useState<number | null>(null)
+  const [wStart, setWStart] = useState<number | null>(null)
+  const [wShift, setWShift] = useState(0)   // ms adelantados o atrasados al cambiar de paso
   const inj = useInjury()
   const nav = useNavigate()
   const [painDlg, setPainDlg] = useState(false)
@@ -174,9 +176,9 @@ function Session({ day, min, setMin, onClose }: {
   exRef.current = ex
   phaseRef.current = phase
 
-   // Fin del cronómetro del calentamiento: empieza el entrenamiento solo
+     // Fin del calentamiento: empieza el entrenamiento solo
   useEffect(() => {
-    if (wEnd !== null && now >= wEnd && !warmBeeped.current) {
+    if (wStart !== null && wElapsed >= warm.totalSec && !warmBeeped.current) {
       warmBeeped.current = true
       navigator.vibrate?.(400)
       t0.current = Date.now()
@@ -184,7 +186,7 @@ function Session({ day, min, setMin, onClose }: {
       setPhase('work')
       window.scrollTo(0, 0)
     }
-  }, [now, wEnd])
+  }, [now, wStart, wShift])
 
   // Reloj general: el tiempo por ejercicio solo cuenta durante el entrenamiento (no el calentamiento)
   useEffect(() => {
@@ -210,6 +212,15 @@ function Session({ day, min, setMin, onClose }: {
     if (wEnd !== null && now >= wEnd && !warmBeeped.current) { warmBeeped.current = true; navigator.vibrate?.(400) }
   }, [now, wEnd])
 
+  const lastStep = useRef(-1)
+  useEffect(() => {
+    if (wStart === null) return
+    const el = Math.max(0, now - wStart + wShift) / 1000
+    let acc = 0, idx = warm.steps.length - 1
+    for (let i = 0; i < warm.steps.length; i++) { acc += warm.steps[i].sec; if (el < acc) { idx = i; break } }
+    if (idx !== lastStep.current) { if (lastStep.current !== -1) navigator.vibrate?.(150); lastStep.current = idx }
+  }, [now, wStart, wShift])
+
   if (list.length === 0) return null
 
   const startWork = () => {
@@ -227,7 +238,25 @@ function Session({ day, min, setMin, onClose }: {
   const restSecs = restCfg[ex] ?? (cur.rest + bonus)
   const rest = restEnd !== null ? Math.max(0, Math.ceil((restEnd - now) / 1000)) : null
   const elapsed = done ? done.sec : phase === 'work' ? Math.floor((now - t0.current) / 1000) : 0
-  const warmLeft = wEnd !== null ? Math.max(0, Math.ceil((wEnd - now) / 1000)) : warm.totalSec
+  const warmLeft = wStart !== null ? Math.max(0, Math.ceil(warm.totalSec - Math.max(0, now - wStart + wShift) / 1000)) : warm.totalSec
+    // Tiempo transcurrido del calentamiento y paso en el que va
+  const wElapsed = wStart !== null ? Math.max(0, now - wStart + wShift) / 1000 : 0
+  const cum: number[] = []
+  warm.steps.reduce((a, s) => { cum.push(a + s.sec); return a + s.sec }, 0)
+  const wIdx = wStart === null ? -1 : Math.min(cum.findIndex(c => wElapsed < c) === -1 ? warm.steps.length - 1 : cum.findIndex(c => wElapsed < c), warm.steps.length - 1)
+  const stepStart = wIdx > 0 ? cum[wIdx - 1] : 0
+  const stepLeft = wIdx >= 0 ? Math.max(0, Math.ceil(cum[wIdx] - wElapsed)) : 0
+  const wPct = wStart === null ? 0 : Math.min(100, (wElapsed / warm.totalSec) * 100)
+
+  // Salta al inicio del paso indicado
+  const jump = (to: number) => {
+    if (wStart === null) return
+    const target = to <= 0 ? 0 : cum[to - 1]
+    setWShift(target * 1000 - (Date.now() - wStart) + 50)
+    setNow(Date.now())
+  }
+
+
   const allDone = (i: number) => rows[i].length > 0 && rows[i].every(r => r.done)
   const totalSets = rows.reduce((a, r) => a + r.length, 0)
   const doneSets = rows.reduce((a, r) => a + r.filter(x => x.done).length, 0)
@@ -284,10 +313,10 @@ function Session({ day, min, setMin, onClose }: {
 
   const partName = day.name.split(' · ')[1] ?? day.name
   const miniLabel = done ? 'Completado'
-    : phase === 'warm' ? 'Calentamiento'
+        : phase === 'warm' ? (wStart === null ? 'Calentamiento' : `Calentando · paso ${wIdx + 1}/${warm.steps.length}`)
     : `Ejercicio ${ex + 1}/${list.length} · ${doneSets}/${totalSets} series`
   const miniTime = phase === 'warm' && !done ? fmt(warmLeft) : fmt(rest ?? elapsed)
-  const wDone = warm.steps.filter((_, i) => wChk[i]).length
+  const wDone = wStart === null ? 0 : Math.min(warm.steps.length, wIdx + 1)
 
   return (
     <>
@@ -333,22 +362,46 @@ function Session({ day, min, setMin, onClose }: {
               </ul>
             </div>
 
+                        {wStart !== null && (
+              <div className="card wnow">
+                <small>Paso {wIdx + 1} de {warm.steps.length}</small>
+                <h3>{warm.steps[wIdx].name}</h3>
+                <div className="wtimer">{fmt(stepLeft)}</div>
+                <p className="hint" style={{ margin: 0 }}>{warm.steps[wIdx].detail}</p>
+                <div className="hbar" style={{ marginTop: '.7rem' }}><i style={{ width: `${((wElapsed - stepStart) / warm.steps[wIdx].sec) * 100}%` }} /></div>
+                {warm.steps[wIdx + 1] && <p className="hint" style={{ margin: '.6rem 0 0' }}>Sigue: <b>{warm.steps[wIdx + 1].name}</b></p>}
+                <div className="row">
+                  <button className="btn" disabled={wIdx === 0 && wElapsed - stepStart < 3} onClick={() => jump(wElapsed - stepStart > 3 ? wIdx : wIdx - 1)}>← Anterior</button>
+                  <button className="btn" onClick={() => (wIdx >= warm.steps.length - 1 ? startWork() : jump(wIdx + 1))}>{wIdx >= warm.steps.length - 1 ? 'Terminar' : 'Siguiente →'}</button>
+                </div>
+              </div>
+            )}
+
+            <div className="hbar" style={{ margin: '.8rem 0 .2rem' }}><i style={{ width: `${wPct}%` }} /></div>
+            <p className="hint" style={{ margin: '0 0 .4rem' }}>{wStart === null ? 'Toca "Iniciar cronómetro" para empezar.' : `Calentamiento: ${Math.round(wPct)}% · quedan ${fmt(warmLeft)}`}</p>
+
             <div className="card" style={{ padding: '.3rem 1rem' }}>
-              {warm.steps.map((s, i) => (
-                <button key={i} className={`wstep${wChk[i] ? ' on' : ''}`} onClick={() => setWChk(c => ({ ...c, [i]: !c[i] }))}>
-                  <span className="wchk">{wChk[i] ? <Icon name="check" size={16} /> : i + 1}</span>
-                  <span className="wtxt"><b>{s.name}</b><small>{s.detail}</small></span>
-                  <span className="wsec">{s.sec >= 60 ? `${Math.round(s.sec / 60 * 10) / 10} min` : `${s.sec} s`}</span>
-                </button>
-              ))}
+              {warm.steps.map((s, i) => {
+                const st = wStart === null ? 'idle' : i < wIdx ? 'done' : i === wIdx ? 'now' : 'next'
+                return (
+                  <div key={i} className={`wstep ${st}`}>
+                    <span className="wchk">{st === 'done' ? <Icon name="check" size={16} /> : i + 1}</span>
+                    <span className="wtxt"><b>{s.name}</b><small>{s.detail}</small></span>
+                    <span className="wsec">{s.sec >= 60 ? `${Math.round(s.sec / 60 * 10) / 10} min` : `${s.sec} s`}</span>
+                  </div>
+                )
+              })}
             </div>
 
-                       {wEnd === null ? (
-              <button className="btn primary" onClick={() => { warmBeeped.current = false; setNow(Date.now()); setWEnd(Date.now() + warm.totalSec * 1000) }}>
+            {wStart === null ? (
+              <button className="btn primary" onClick={() => {
+                warmBeeped.current = false; lastStep.current = -1
+                const t = Date.now(); setNow(t); setWShift(0); setWStart(t); setWEnd(t + warm.totalSec * 1000)
+              }}>
                 <Icon name="clock" size={16} /> Iniciar cronómetro ({Math.round(warm.totalSec / 60)} min)
               </button>
             ) : (
-              <div className="okbox">Calentando… el entrenamiento empezará solo cuando el cronómetro llegue a cero.</div>
+              <div className="okbox">Calentando… el entrenamiento empezará solo al terminar el último paso.</div>
             )}
             <button className="link" onClick={() => setSkipAsk(true)}>Saltar calentamiento</button>
           </>

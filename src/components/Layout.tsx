@@ -4,6 +4,7 @@ import { WorkoutProvider, useWorkout } from './Workout'
 import MealReminderWatcher from './MealReminderWatcher'
 import TermsGate from './TermsGate'
 import PwaStatus from './PwaStatus'
+import ReminderWatcher from './ReminderWatcher'
 
 const tabs = [
   { to: '/app', end: true, icon: 'home', label: 'Inicio' },
@@ -26,6 +27,7 @@ function Shell() {
       <TermsGate />
       <MealReminderWatcher />
       <TermsGate />
+      <ReminderWatcher />
       <main className="content"><Outlet /></main>
       <nav className="bottom-nav">
         {tabs.map(t => (

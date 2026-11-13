@@ -601,3 +601,23 @@ button.back{background:none;border:0;padding:0;font-family:inherit;cursor:pointe
 .net-bar.ok{background:#12281a;color:#7fdca1}
 .net-bar.upd{display:flex;align-items:center;justify-content:center;gap:.8rem;background:var(--y);color:#000;top:auto;bottom:calc(72px + env(safe-area-inset-bottom,0px));border-radius:var(--r);width:calc(100% - 1.2rem)}
 .net-bar.upd button{background:#000;color:#fff;border:0;border-radius:8px;padding:.4rem .8rem;font-weight:700;cursor:pointer}
+
+
+.remind-stack{position:fixed;top:.6rem;left:50%;transform:translateX(-50%);width:calc(100% - 1.2rem);max-width:410px;z-index:95;display:flex;flex-direction:column;gap:.5rem}
+.remind-stack .remind-banner{position:static;transform:none;width:100%;max-width:none}
+
+
+
+/* Calentamiento por pasos */
+.wnow{border-color:var(--y);text-align:center}
+.wnow small{color:var(--y);text-transform:uppercase;letter-spacing:.1em;font-size:.68rem;font-weight:600}
+.wnow h3{margin:.2rem 0}
+.wtimer{font:800 4rem/1 'Barlow Condensed',sans-serif;color:var(--y);margin:.2rem 0}
+.wnow .row .btn{margin-top:.6rem}
+.wstep{display:flex;align-items:center;gap:.8rem;border-bottom:1px solid var(--line);padding:.8rem 0;text-align:left}
+.wstep:last-child{border-bottom:0}
+.wstep.now{background:#17150a;margin:0 -1rem;padding:.8rem 1rem}
+.wstep.now .wchk{background:var(--y);color:#000}
+.wstep.done .wtxt b{opacity:.5;text-decoration:line-through}
+.wstep.done .wchk{background:#12281a;color:#7fdca1}
+.wstep.next{opacity:.6}
