@@ -9,6 +9,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { PainSlider } from '../pages/InjuryCheck'
 import { loadsZone, painAdvice, suggestKg, useInjury, ZONE_LABEL } from '../lib/injury'
 import { safeInsert } from '../lib/offline'
+import { loadNotes, saveNote } from '../lib/notes'
 
 interface Ctx { day: PlanDay | null; min: boolean; start: (d: PlanDay) => void }
 const WorkoutCtx = createContext<Ctx>({ day: null, min: false, start: () => {} })
@@ -145,7 +146,7 @@ function Session({ day, min, setMin, onClose }: {
     list.map(e => Array.from({ length: e.sets }, () => ({ kg: '', reps: String(repsDefault(e.reps)), done: false }))))
   const [restCfg, setRestCfg] = useState<Record<number, number>>({})
   const [restEnd, setRestEnd] = useState<number | null>(null)
-  const [notes, setNotes] = useState<Record<number, string>>({})
+
   const [showNote, setShowNote] = useState(false)
   const [last] = useState<Record<string, { kg: number; reps: number | null }>>({})
   const [done, setDone] = useState<{ sec: number; sets: number } | null>(null)
@@ -162,7 +163,12 @@ function Session({ day, min, setMin, onClose }: {
   const nav = useNavigate()
   const [painDlg, setPainDlg] = useState(false)
   const [painVal, setPainVal] = useState(3)
-
+  
+  
+  const [notes, setNotes] = useState<Record<string, string>>({})
+  const [noteMsg, setNoteMsg] = useState('')
+  const noteTimer = useRef<number | undefined>(undefined)
+  
   const warm = useMemo(() => buildWarmup(day, profile?.training_place ?? null), [day, profile?.training_place])
   const cardio = useMemo(() => cardioRec(profile?.training_place ?? null, profile?.goal ?? null), [profile?.training_place, profile?.goal])
 
@@ -221,6 +227,15 @@ function Session({ day, min, setMin, onClose }: {
     if (idx !== lastStep.current) { if (lastStep.current !== -1) navigator.vibrate?.(150); lastStep.current = idx }
   }, [now, wStart, wShift])
 
+    // Notas guardadas de estos ejercicios
+  useEffect(() => {
+    loadNotes(session!.user.id, list.map(e => e.name)).then(n => {
+      setNotes(n)
+      const first = list[0]?.name
+      if (first && n[first]) setShowNote(true)
+    })
+  }, [])
+
   if (list.length === 0) return null
 
   const startWork = () => {
@@ -256,6 +271,17 @@ function Session({ day, min, setMin, onClose }: {
     setNow(Date.now())
   }
 
+    const onNote = (v: string) => {
+    const name = cur.name
+    setNotes(n => ({ ...n, [name]: v }))
+    setNoteMsg('Guardando…')
+    window.clearTimeout(noteTimer.current)
+    noteTimer.current = window.setTimeout(async () => {
+      const ok = await saveNote(session!.user.id, name, v)
+      setNoteMsg(ok ? 'Guardada' : 'Guardada en tu dispositivo; se enviará cuando haya internet')
+    }, 800)
+  }
+
 
   const allDone = (i: number) => rows[i].length > 0 && rows[i].every(r => r.done)
   const totalSets = rows.reduce((a, r) => a + r.length, 0)
@@ -281,7 +307,9 @@ function Session({ day, min, setMin, onClose }: {
     setRows(rs => rs.map((r, k) => (k === ex ? [...r, { kg: prev?.kg ?? '', reps: prev?.reps ?? '10', done: false }] : r)))
   }
 
-  const goTo = (i: number) => { setEx(i); setShowNote(false); setRestEnd(null) }
+    const goTo = (i: number) => {
+    setEx(i); setShowNote(!!notes[list[i]?.name]); setNoteMsg(''); setRestEnd(null)
+  }
 
   const save = async () => {
     setSaving(true); setErr('')
@@ -436,7 +464,9 @@ function Session({ day, min, setMin, onClose }: {
             <p className="howto">{howTo(cur.name)}</p>
 
             <div className="qrow">
-              <button className="qbtn" onClick={() => setShowNote(s => !s)}><Icon name="pencil" size={16} />Notas</button>
+                            <button className="qbtn" onClick={() => setShowNote(s => !s)}>
+                <Icon name="pencil" size={16} />Notas{notes[cur.name] ? ' •' : ''}
+              </button>
               <button className="qbtn" onClick={() => setRestCfg(c => ({ ...c, [ex]: restSecs >= 180 ? 30 : restSecs + 15 }))}>
                 <Icon name="clock" size={16} />Descanso {fmt(restSecs)}
               </button>
@@ -447,8 +477,11 @@ function Session({ day, min, setMin, onClose }: {
             
 
             {showNote && (
-              <textarea placeholder="Tus notas para este ejercicio…" value={notes[ex] ?? ''}
-                onChange={e => setNotes(n => ({ ...n, [ex]: e.target.value }))} />
+              <>
+                <textarea placeholder="Tus notas para este ejercicio (ajuste de asiento, cómo te sentiste, qué mejorar…)"
+                  value={notes[cur.name] ?? ''} onChange={e => onNote(e.target.value)} />
+                {noteMsg && <p className="hint" style={{ margin: '0 0 .4rem' }}>{noteMsg}</p>}
+              </>
             )}
 
             <div className="stable">

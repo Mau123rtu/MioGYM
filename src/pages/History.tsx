@@ -120,6 +120,12 @@ function ExerciseDetail({ name, logs, onBack }: { name: string; logs: Log[]; onB
   const trend = (d: number, unit: string) => (d > 0 ? `subió +${num(d)} ${unit}` : d < 0 ? `bajó ${num(d)} ${unit}` : `sin cambio en ${unit}`)
   const maxKg = Math.max(...days.map(d => d.best.kg))
   const totalSets = days.reduce((a, d) => a + d.sets.length, 0)
+  
+  const [note, setNote] = useState('')
+  useEffect(() => {
+    supabase.from('exercise_notes').select('note').eq('exercise', name).maybeSingle()
+      .then(({ data }) => setNote((data?.note as string) ?? ''))
+  }, [name])
 
   return (
     <>
@@ -134,6 +140,14 @@ function ExerciseDetail({ name, logs, onBack }: { name: string; logs: Log[]; onB
         <div><small>Último registro</small><b>{body ? `${lastP.reps} reps` : `${num(lastP.kg)} kg × ${lastP.reps}`}</b></div>
       </div>
 
+
+      {note && (
+        <div className="card">
+          <h3>Mi nota</h3>
+          <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{note}</p>
+        </div>
+      )}
+      
       <h3>Progreso</h3>
       <div className="card">
         <div className="legend" style={{ marginTop: 0 }}>

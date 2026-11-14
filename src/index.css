@@ -621,3 +621,8 @@ button.back{background:none;border:0;padding:0;font-family:inherit;cursor:pointe
 .wstep.done .wtxt b{opacity:.5;text-decoration:line-through}
 .wstep.done .wchk{background:#12281a;color:#7fdca1}
 .wstep.next{opacity:.6}
+
+
+.body-wrap canvas{height:210px;width:auto;aspect-ratio:400/695;display:block;filter:drop-shadow(0 0 1.5px rgba(255,255,255,.5))}
+.body-wrap.compact canvas{height:190px}
+.picker canvas{height:230px}

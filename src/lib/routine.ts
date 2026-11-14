@@ -43,6 +43,67 @@ export const CATALOG: Ex[] = [
   E('Plancha', 'abdomen', 'corporal', 'hombro'), E('Crunch', 'abdomen', 'corporal', 'cuello'),
   E('Elevación de rodillas', 'abdomen', 'corporal', 'cadera'), E('Crunch en polea', 'abdomen', 'poleas', 'cuello'),
   E('Pallof press con banda', 'abdomen', 'bandas'),
+
+    // ---------- PECHO ----------
+  E('Press inclinado con mancuernas', 'pecho', 'libres', 'hombro'), E('Press inclinado con barra', 'pecho', 'libres', 'hombro,codo'),
+  E('Aperturas con mancuernas', 'pecho', 'libres', 'hombro'), E('Pullover con mancuerna', 'pecho', 'libres', 'hombro'),
+  E('Contractora de pecho (peck deck)', 'pecho', 'maquinas', 'hombro'), E('Press inclinado en máquina', 'pecho', 'maquinas', 'hombro'),
+  E('Cruces en polea alta', 'pecho', 'poleas', 'hombro'), E('Cruces en polea baja', 'pecho', 'poleas', 'hombro'),
+  E('Press de pecho con banda', 'pecho', 'bandas', 'hombro'),
+  E('Flexiones inclinadas (manos elevadas)', 'pecho', 'corporal', 'hombro'), E('Flexiones declinadas (pies elevados)', 'pecho', 'corporal', 'hombro,codo'),
+  E('Flexiones con agarre ancho', 'pecho', 'corporal', 'hombro'), E('Fondos en paralelas', 'pecho', 'corporal', 'hombro,codo'),
+
+  // ---------- ESPALDA ----------
+  E('Remo con barra', 'espalda', 'libres', 'espalda'), E('Remo en barra T', 'espalda', 'libres', 'espalda'),
+  E('Peso muerto convencional', 'espalda', 'libres', 'espalda,cadera,rodilla'), E('Encogimientos de hombros con mancuernas', 'espalda', 'libres', 'cuello'),
+  E('Remo en máquina', 'espalda', 'maquinas', 'espalda'), E('Jalón con agarre cerrado', 'espalda', 'maquinas,poleas', 'hombro'),
+  E('Dominadas asistidas en máquina', 'espalda', 'maquinas', 'hombro,codo'), E('Hiperextensiones lumbares', 'espalda', 'maquinas,corporal', 'espalda'),
+  E('Pullover en polea (brazos rectos)', 'espalda', 'poleas', 'hombro'), E('Remo a un brazo en polea', 'espalda', 'poleas', 'espalda'),
+  E('Jalón con banda', 'espalda', 'bandas', 'hombro'),
+  E('Dominadas supinas', 'espalda', 'corporal', 'hombro,codo'), E('Colgarse de la barra', 'espalda', 'corporal', 'hombro,codo'),
+  E('Superman', 'espalda', 'corporal', 'espalda'),
+
+  // ---------- HOMBROS ----------
+  E('Press Arnold', 'hombros', 'libres', 'hombro'), E('Press militar con barra', 'hombros', 'libres', 'hombro,espalda'),
+  E('Elevaciones frontales con mancuernas', 'hombros', 'libres', 'hombro'), E('Pájaros con mancuernas', 'hombros', 'libres', 'hombro'),
+  E('Remo al mentón', 'hombros', 'libres', 'hombro,codo'),
+  E('Pájaros en máquina', 'hombros', 'maquinas', 'hombro'), E('Elevaciones laterales en polea', 'hombros', 'poleas', 'hombro'),
+  E('Press de hombros con banda', 'hombros', 'bandas', 'hombro'), E('Pájaros con banda', 'hombros', 'bandas', 'hombro'),
+  E('Elevaciones frontales con banda', 'hombros', 'bandas', 'hombro'), E('Rotación externa con banda', 'hombros', 'bandas', 'hombro'),
+  E('Pike push-up elevado', 'hombros', 'corporal', 'hombro,codo'),
+
+  // ---------- BRAZOS ----------
+  E('Curl con barra', 'brazos', 'libres', 'codo'), E('Curl martillo', 'brazos', 'libres', 'codo'),
+  E('Curl concentrado', 'brazos', 'libres', 'codo'), E('Curl de muñeca', 'brazos', 'libres', 'codo'),
+  E('Extensión de tríceps sobre la cabeza', 'brazos', 'libres', 'codo,hombro'), E('Patada de tríceps', 'brazos', 'libres', 'codo'),
+  E('Press de banca con agarre cerrado', 'brazos', 'libres', 'hombro,codo'),
+  E('Curl en polea baja', 'brazos', 'poleas', 'codo'), E('Tríceps en polea con cuerda', 'brazos', 'poleas', 'codo'),
+  E('Extensión de tríceps con banda', 'brazos', 'bandas', 'codo'),
+  E('Flexiones diamante', 'brazos', 'corporal', 'hombro,codo'), E('Curl isométrico con toalla', 'brazos', 'corporal', 'codo'),
+
+  // ---------- PIERNAS Y GLÚTEOS ----------
+  E('Sentadilla con barra', 'piernas', 'libres', 'rodilla,cadera,espalda'), E('Sentadilla frontal', 'piernas', 'libres', 'rodilla,cadera,espalda'),
+  E('Sentadilla sumo con mancuerna', 'piernas', 'libres', 'rodilla,cadera,espalda'), E('Zancadas con mancuernas', 'piernas', 'libres', 'rodilla,cadera,tobillo'),
+  E('Peso muerto a una pierna con mancuerna', 'piernas', 'libres', 'cadera,espalda,tobillo'), E('Elevación de talones con mancuernas', 'piernas', 'libres', 'tobillo'),
+  E('Sentadilla búlgara', 'piernas', 'corporal,libres', 'rodilla,cadera'), E('Subidas al banco (step-up)', 'piernas', 'corporal,libres', 'rodilla,cadera'),
+  E('Sentadilla hack en máquina', 'piernas', 'maquinas', 'rodilla,cadera'), E('Curl femoral sentado', 'piernas', 'maquinas', 'rodilla'),
+  E('Abductores en máquina', 'piernas', 'maquinas', 'cadera'), E('Aductores en máquina', 'piernas', 'maquinas', 'cadera'),
+  E('Elevación de talones en máquina', 'piernas', 'maquinas', 'tobillo'),
+  E('Patada de glúteo en polea', 'piernas', 'poleas', 'cadera'),
+  E('Puente de glúteo con banda', 'piernas', 'bandas', 'cadera'), E('Caminata lateral con banda', 'piernas', 'bandas', 'cadera,rodilla'),
+  E('Zancada hacia atrás', 'piernas', 'corporal', 'rodilla,cadera'), E('Zancadas laterales', 'piernas', 'corporal', 'rodilla,cadera'),
+  E('Sentadilla con salto', 'piernas', 'corporal', 'rodilla,cadera,tobillo'), E('Sentadilla en pared', 'piernas', 'corporal', 'rodilla'),
+  E('Sentadilla a una pierna asistida', 'piernas', 'corporal', 'rodilla,cadera,tobillo'), E('Puente de glúteo a una pierna', 'piernas', 'corporal', 'cadera'),
+  E('Patada de glúteo en cuatro apoyos', 'piernas', 'corporal', 'cadera'),
+
+  // ---------- ABDOMEN ----------
+  E('Rueda abdominal', 'abdomen', 'libres', 'hombro,espalda'), E('Crunch en máquina', 'abdomen', 'maquinas', 'cuello'),
+  E('Leñador en polea', 'abdomen', 'poleas', 'espalda'),
+  E('Plancha lateral', 'abdomen', 'corporal', 'hombro'), E('Bicicleta abdominal', 'abdomen', 'corporal', 'cuello'),
+  E('Elevación de piernas tumbado', 'abdomen', 'corporal', 'cadera'), E('Elevación de piernas colgado', 'abdomen', 'corporal', 'hombro,codo'),
+  E('Crunch inverso', 'abdomen', 'corporal', 'cadera'), E('Abdominales en V', 'abdomen', 'corporal', 'cuello,cadera'),
+  E('Mountain climbers', 'abdomen', 'corporal', 'hombro,codo'), E('Giros rusos', 'abdomen', 'corporal', 'espalda'),
+  E('Dead bug', 'abdomen', 'corporal'), E('Bird dog', 'abdomen', 'corporal'), E('Hollow hold', 'abdomen', 'corporal'),
 ]
 
 const TEMPLATES: Record<string, { name: string; g: G[] }[]> = {
