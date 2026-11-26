@@ -11,7 +11,8 @@ const tabs = [
   { to: '/app/ejercicios', icon: 'dumbbell', label: 'Rutinas' },
   { to: '/app/nutricion', icon: 'food', label: 'Nutrición' },
   { to: '/app/lesiones', icon: 'shield', label: 'Prevención' },
-  { to: '/app/suplementos', icon: 'pill', label: 'Suplem.' },
+  { to: '/app/suplementos', icon: 'pill', label: 'Suplementos' },
+  { to: '/app/asistente', icon: 'chat', label: 'Asistente', desk: true },
   { to: '/app/mas', icon: 'menu', label: 'Más' },
 ]
 
@@ -29,9 +30,11 @@ function Shell() {
       <TermsGate />
       <ReminderWatcher />
       <main className="content"><Outlet /></main>
-      <nav className="bottom-nav">
+            <nav className="bottom-nav">
+        <div className="side-brand"><img src="/logo.png" alt="MioGym" /></div>
         {tabs.map(t => (
-          <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => (isActive ? 'tab active' : 'tab')}>
+          <NavLink key={t.to} to={t.to} end={t.end}
+            className={({ isActive }) => `tab${isActive ? ' active' : ''}${t.desk ? ' desk' : ''}`}>
             <Icon name={t.icon} size={22} /><small>{t.label}</small>
           </NavLink>
         ))}

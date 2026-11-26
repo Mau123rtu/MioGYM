@@ -647,3 +647,77 @@ button.back{background:none;border:0;padding:0;font-family:inherit;cursor:pointe
 .chat-in input{margin:0}
 .chat-send{flex:none;width:48px;border:0;border-radius:var(--r);background:var(--y);color:#000;cursor:pointer;display:grid;place-items:center}
 .chat-send:disabled{opacity:.4}
+
+
+
+/* Elementos que solo existen en computadora */
+.side-brand{display:none}
+.tab.desk{display:none}
+
+/* =====================  VERSIÓN DE COMPUTADORA  ===================== */
+@media (min-width:1024px) and (hover:hover) and (pointer:fine){
+  :root{--side:240px}
+  #root{max-width:none;margin:0}
+  .app{padding-left:var(--side)}
+  .content{max-width:960px;margin:0 auto;padding:2.2rem 2.5rem 4rem}
+  .app.has-mini .content{padding-bottom:7rem}
+  h1{font-size:2.4rem}
+
+  /* Menú lateral */
+  .bottom-nav{top:0;bottom:0;left:0;right:auto;transform:none;width:var(--side);max-width:none;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:.25rem;background:#0a0a0a;border-top:0;border-right:1px solid var(--line);padding:1.4rem .8rem;backdrop-filter:none}
+  .side-brand{display:block;padding:.2rem 1rem 1.6rem}
+  .side-brand img{height:38px;width:auto;max-width:100%;object-fit:contain;display:block}
+  .tab,.tab.desk{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:.85rem;padding:.8rem 1rem;border-radius:10px}
+  .tab small{font-size:.95rem;letter-spacing:0}
+  .tab:hover{background:var(--s1);color:var(--text)}
+  .tab.active{background:var(--s1)}
+  .tab.active::before{top:22%;bottom:22%;left:0;right:auto;width:3px;height:auto;border-radius:2px}
+
+  /* Tarjetas que se deslizaban de lado: ahora en cuadrícula */
+  .hscroll,.hscroll.in{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.8rem;overflow:visible;scroll-snap-type:none;margin:.6rem 0;padding:0}
+  .hscroll>*{max-width:none;min-width:0;flex:none}
+  .hscroll.qstats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .hscroll.in{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+  .mcard,.qs,.sc,.hcard,.rcard,.coach-c,.mealc{flex:none}
+  .strip{margin:0;padding:.3rem 0 .6rem}
+
+  /* Rejillas más anchas */
+  .dgrid,.egrid{grid-template-columns:repeat(3,1fr)}
+  .pgrid{grid-template-columns:repeat(6,1fr)}
+  .kv,.mgrid{grid-template-columns:repeat(3,1fr)}
+  .mtiles{grid-template-columns:repeat(6,1fr)}
+  .stats{gap:.8rem}
+  .dtile{aspect-ratio:4/3}
+
+  /* Ratón: respuesta al pasar por encima */
+  .card.sitem:hover,.dcard:hover,.rcard:hover,.etile:hover,.opt:hover,.dtile:hover,.mod-h:hover,.hcard:hover,.pthumb:hover{border-color:var(--y)}
+  .btn:hover:not(:disabled),.btn-ver:hover,.chipbtn:hover,.qbtn:hover{filter:brightness(1.12)}
+  .option:hover,.acc-h:hover,.grp-h:hover{background:var(--s2)}
+
+  /* Registro, inicio de sesión y cuestionarios */
+  .wizard{max-width:600px;margin:0 auto;padding:3rem 2rem}
+  .landing{padding:3rem max(2rem,calc((100% - 760px)/2))}
+  .brand-img{height:60px}
+  .slide h1{font-size:3.4rem}
+  .slide p{font-size:1.15rem;max-width:44ch}
+
+  /* Entrenamiento a pantalla completa, con el contenido centrado */
+  .wk-full{max-width:none;margin:0;padding:2rem max(1.2rem,calc((100% - 760px)/2)) 6rem}
+  .wk-mini{left:var(--side);right:0;margin:0 auto;transform:none;width:min(540px,calc(100% - 3rem));max-width:none;bottom:1.2rem}
+  .restbar{left:0;right:0;margin:0 auto;transform:none;width:min(520px,calc(100% - 2rem));max-width:none;bottom:1.2rem}
+
+  /* Chat */
+  .chat-page{padding-bottom:6.5rem}
+  .chat-in{left:var(--side);right:0;margin:0 auto;transform:none;width:min(880px,calc(100% - 4rem));max-width:none;bottom:1rem;border:1px solid var(--line);border-radius:14px;padding:.6rem}
+  .bub{max-width:75%}
+
+  /* Avisos y ventanas */
+  .remind-stack{left:var(--side);right:0;margin:0 auto;transform:none;width:min(460px,calc(100% - 3rem));max-width:none;top:1rem}
+  .net-bar{left:var(--side);right:0;transform:none;max-width:none;width:auto}
+  .net-bar.upd{left:auto;right:1.5rem;top:auto;bottom:1.5rem;width:auto;padding-top:.5rem}
+  .modal-bg{align-items:center}
+  .modal{max-width:560px;max-height:85vh;border:1px solid var(--line);border-radius:16px;padding-bottom:1.4rem}
+  .viewer-in{max-width:520px}
+  .terms-dlg{max-width:560px}
+  .dlg{max-width:420px}
+}
