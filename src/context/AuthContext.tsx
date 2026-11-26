@@ -18,6 +18,7 @@ export interface Profile {
   avatar_url: string | null
     terms_accepted_at: string | null
   terms_version: string | null
+    assistant_consent_at: string | null
 }
 
 interface Ctx {

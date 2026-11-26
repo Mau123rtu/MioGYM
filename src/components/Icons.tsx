@@ -41,6 +41,10 @@ const P: Record<string, ReactNode> = {
   tape: <><rect x="2" y="8" width="20" height="8" rx="1.5" /><path d="M6 8v3M10 8v4M14 8v3M18 8v4" /></>,
   bulb: <><path d="M9 18h6M10 21h4" /><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z" /></>,
   file: <><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v4h4M9 12h6M9 16h6" /></>,
+
+    chat: <path d="M4 5h16v11H9l-5 4z" />,
+  send: <path d="M3 11 21 3l-8 18-2-7z" />,
+  video: <><rect x="3" y="6" width="13" height="12" rx="2" /><path d="m16 10 5-3v10l-5-3z" /></>,
 }
 
 export default function Icon({ name, size = 22 }: { name: string; size?: number }) {

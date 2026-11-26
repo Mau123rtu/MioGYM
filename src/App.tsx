@@ -11,6 +11,7 @@ import More from './pages/More'
 import Account from './pages/Account'
 import Layout from './components/Layout'
 import Terms from './pages/Terms'
+import Assistant from './pages/Assistant'
 
 function Private({ children }: { children: ReactNode }) {
   const { session, profile, loading } = useAuth()
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="mas/cuenta" element={<Account />} />
             <Route path=":module" element={<Module />} />
             <Route path=":module/perfil" element={<Questionnaire />} />
+            <Route path="asistente" element={<Assistant />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

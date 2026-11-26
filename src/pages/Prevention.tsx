@@ -244,6 +244,11 @@ export default function Prevention({ a }: { a: Answers }) {
             )
           })}
            {reports && active.length > 0 && <ExerciseGuide reports={reports} blocked={summary.mode === 'blocked'} />}
+
+          <Link to="/app/asistente" state={{ q: 'Revisa mis molestias activas: ¿qué ejercicios debo evitar, cómo cuido la zona y qué técnica debo corregir?' }} className="btn">
+            <Icon name="chat" size={16} /> Preguntar al asistente sobre mi molestia
+          </Link>
+
           <button className="btn primary" onClick={() => setCheck({})}><Icon name="plus" size={16} /> {active.length ? 'Reportar otra molestia' : 'Reportar una molestia'}</button>
           <p className="hint">La app no puede dar un diagnóstico exacto: orienta con lo que le cuentas. Ante dolor persistente, hinchazón, hormigueo o pérdida de fuerza, consulta a un médico.</p>
         </>

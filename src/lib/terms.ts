@@ -1,4 +1,4 @@
-export const TERMS_VERSION = '3.2'
+export const TERMS_VERSION = '3.4'
 export const TERMS_DATE = '31 de octubre de 2026'
 const OWNER = 'MioGym Technologies'
 const EMAIL = 'miogym@gmail.com'
@@ -39,6 +39,7 @@ export const TERMS: Section[] = [
     'No vendemos tus datos personales.',
     'Usamos proveedores para operar la App: Supabase (autenticación, base de datos y almacenamiento de archivos). Si usas el análisis de fotos de comida con IA y pulsas "Analizar con IA", esa foto se envía a Google (Gemini) únicamente para estimar la comida. Si no lo pulsas, no se envía.',
     `Puedes pedir acceso, rectificación, cancelación o eliminación de tus datos, u oponerte a su tratamiento, escribiendo a ${EMAIL}.`,
+    'Si usas el Asistente (chat), tu pregunta, la conversación reciente y un resumen de tus datos (edad, sexo, peso, altura, objetivo, entrenos, comidas, suplementos y molestias) se envían a Google (Gemini) para generar la respuesta. No se envían tus fotos ni tu correo. Puedes borrar tu conversación cuando quieras. Las respuestas las genera una IA, pueden contener errores y no sustituyen la valoración de un profesional de la salud.',
     'Conservamos tus datos mientras tengas cuenta. Aplicamos medidas de seguridad razonables, pero ningún sistema es completamente infalible.' ] },
   { title: '9. Nutrición y suplementos', body: [
     'Los planes de comida, las calorías y las valoraciones de un plato son aproximaciones y no reemplazan un plan elaborado por un nutriólogo o dietista.',

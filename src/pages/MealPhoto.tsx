@@ -170,7 +170,7 @@ export default function MealPhoto({ day, defaultMeal, phase, onClose, onSaved }:
         <Icon name="spark" size={16} /> {busy ? 'Analizando…' : 'Analizar con IA'}
       </button>
       <button className="btn" disabled={busy} onClick={() => { setErr(''); setStep('ing') }}>Calcular por ingredientes</button>
-      <p className="hint">Al pulsar "Analizar con IA", la foto se envía a un servicio de IA (Anthropic) solo para estimar tu comida. Tu foto se guarda de forma privada. Las cifras son estimaciones y pueden fallar.</p>
+      <p className="hint">Al pulsar "Analizar con IA", la foto se envía a un servicio de IA solo para estimar tu comida. Tu foto se guarda de forma privada. Las cifras son estimaciones y pueden fallar.</p>
     </>
   )
 

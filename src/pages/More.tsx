@@ -9,6 +9,7 @@ export default function More() {
       <h1>Más</h1>
       <div className="menu">
         <Link to="/app/mas/cuenta"><span className="ic"><Icon name="user" /></span>Cuenta<i><Icon name="chevron" size={18} /></i></Link>
+        <Link to="/app/asistente"><span className="ic"><Icon name="chat" /></span>Asistente<i><Icon name="chevron" size={18} /></i></Link>
         <Link to="/app/nutricion/perfil"><span className="ic"><Icon name="food" /></span>Editar perfil nutricional<i><Icon name="chevron" size={18} /></i></Link>
         <Link to="/app/lesiones/perfil"><span className="ic"><Icon name="shield" /></span>Editar perfil de prevención<i><Icon name="chevron" size={18} /></i></Link>
         <Link to="/app/suplementos/perfil"><span className="ic"><Icon name="pill" /></span>Editar perfil de suplementos<i><Icon name="chevron" size={18} /></i></Link>
