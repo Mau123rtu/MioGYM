@@ -31,7 +31,7 @@ function Shell() {
       <ReminderWatcher />
       <main className="content"><Outlet /></main>
             <nav className="bottom-nav">
-        <div className="side-brand"><img src="/logo.png" alt="MioGym" /></div>
+        <div className="side-brand"><img src="/Logo_GYM.png" alt="MioGym" /></div>
         {tabs.map(t => (
           <NavLink key={t.to} to={t.to} end={t.end}
             className={({ isActive }) => `tab${isActive ? ' active' : ''}${t.desk ? ' desk' : ''}`}>
