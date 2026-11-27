@@ -107,10 +107,7 @@ export default function Home() {
         </Link>
       )}
 
-        <Link to="/app/asistente" className="cta">
-        Pregunta a tu asistente
-        <small>Técnica, comida, suplementos y molestias según tus datos</small>
-      </Link>
+        
 
             <Coach plan={plan} inj={inj.summary} />
     </>

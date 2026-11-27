@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 import PasswordField from '../components/PasswordField'
 import { checkPassword } from '../lib/password'
 import { TERMS_VERSION } from './../lib/terms'
+import RulerPicker from '../components/RulerPicker'
 
 const GOALS = [
   ['masa', 'Ganar masa muscular'], ['grasa', 'Perder grasa corporal'], ['fuerza', 'Ganar fuerza'],
@@ -39,7 +40,9 @@ export default function Onboarding() {
   const [step, setStep] = useState(session ? 1 : 0)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-    const [terms, setTerms] = useState(false)
+  const [terms, setTerms] = useState(false)
+  const [wTouched, setWTouched] = useState(false)
+  const [hTouched, setHTouched] = useState(false)
 
   const [f, setF] = useState({
     email: '', username: '', password: '',
@@ -49,6 +52,41 @@ export default function Onboarding() {
     level: '', days: '', place: '',
   })
   const set = (k: string, v: string) => setF(p => ({ ...p, [k]: v }))
+    
+  // Validación de peso y altura (solo si el usuario ha interactuado con los campos)
+  const KG_LB = 2.20462
+  const clampN = (n: number, a: number, b: number) => Math.min(b, Math.max(a, n))
+
+  // Peso
+  const wKg = f.weightUnit === 'kg'
+  const wVal = Number(f.weight) || (wKg ? 70 : 154)
+  const setWeight = (v: number) => { set('weight', v.toFixed(1)); setWTouched(true) }
+  const switchWeight = (u: 'kg' | 'lb') => {
+    if (u === f.weightUnit) return
+    const nv = u === 'lb'
+      ? clampN(Math.round((wVal * KG_LB - 67) / 0.2) * 0.2 + 67, 67, 551)
+      : clampN(Math.round((wVal / KG_LB) * 10) / 10, 30, 250)
+    setF(p => ({ ...p, weightUnit: u, weight: nv.toFixed(1) }))
+  }
+
+  // Altura
+  const hCm = f.heightUnit === 'cm'
+  const hVal = hCm ? (Number(f.height) || 170) : (Number(f.feet) > 0 ? Number(f.feet) * 12 + (Number(f.inches) || 0) : 67)
+  const setHeightCm = (v: number) => { set('height', String(v)); setHTouched(true) }
+  const setHeightIn = (v: number) => { setF(p => ({ ...p, feet: String(Math.floor(v / 12)), inches: String(v % 12) })); setHTouched(true) }
+  const switchHeight = (u: 'cm' | 'ft') => {
+    if (u === f.heightUnit) return
+    if (u === 'ft') {
+      const inch = clampN(Math.round(hVal / 2.54), 36, 98)
+      setF(p => ({ ...p, heightUnit: 'ft', feet: String(Math.floor(inch / 12)), inches: String(inch % 12) }))
+    } else {
+      setF(p => ({ ...p, heightUnit: 'cm', height: String(clampN(Math.round(hVal * 2.54), 90, 250)) }))
+    }
+  }
+  const ftIn = (inch: number) => `${Math.floor(inch / 12)}′ ${inch % 12}″`
+  const cmToIn = (cm: number) => Math.round(cm / 2.54)
+
+
   const TOTAL = 9 // paso 0 + 8 preguntas
 
   const canNext = (): boolean => {
@@ -58,8 +96,8 @@ export default function Onboarding() {
       case 1: return f.name.trim().length > 0
       case 2: return !!f.birth && new Date(f.birth) < new Date()
       case 3: return !!f.goal
-      case 4: return Number(f.weight) > 0
-      case 5: return f.heightUnit === 'cm' ? Number(f.height) > 0 : Number(f.feet) > 0
+      case 4: return wTouched && Number(f.weight) > 0
+      case 5: return hTouched && (f.heightUnit === 'cm' ? Number(f.height) > 0 : Number(f.feet) > 0)
       case 6: return !!f.level
       case 7: return !!f.days
       case 8: return !!f.place
@@ -153,29 +191,52 @@ export default function Onboarding() {
         <Options items={GOALS} value={f.goal} onChange={v => set('goal', v)} />
       </>)}
 
-      {step === 4 && (<>
+            {step === 4 && (<>
         <h2>¿Cuál es tu peso actual?</h2>
-        <div className="row">
-          <input type="number" inputMode="decimal" placeholder="Peso" value={f.weight} onChange={e => set('weight', e.target.value)} />
-          <select value={f.weightUnit} onChange={e => set('weightUnit', e.target.value)}>
-            <option value="kg">kg</option><option value="lb">lb</option>
-          </select>
+        <p className="hint">Desliza la regla hasta tu peso.</p>
+        <div className="rp-row">
+          <div className="rp-val">
+            <div className="seg">
+              <button type="button" className={wKg ? 'on' : ''} onClick={() => switchWeight('kg')}>kg</button>
+              <button type="button" className={!wKg ? 'on' : ''} onClick={() => switchWeight('lb')}>lb</button>
+            </div>
+            <div className="rp-num">{wVal.toFixed(1)}<small>{f.weightUnit}</small></div>
+            <p className="hint" style={{ margin: 0 }}>
+              ≈ {wKg ? `${(wVal * KG_LB).toFixed(1)} lb` : `${(wVal / KG_LB).toFixed(1)} kg`}
+            </p>
+            {!wTouched && <p className="hint">Mueve la regla para continuar.</p>}
+          </div>
+          {wKg
+            ? <RulerPicker key="kg" value={wVal} min={30} max={250} step={0.1} tick={10} major={10} mid={5}
+                label={v => String(Math.round(v))} onChange={setWeight} ariaLabel="Peso en kilogramos" />
+            : <RulerPicker key="lb" value={wVal} min={67} max={551} step={0.2} tick={8} major={5} mid={25}
+                label={v => String(Math.round(v))} onChange={setWeight} ariaLabel="Peso en libras" />}
         </div>
       </>)}
 
       {step === 5 && (<>
         <h2>¿Cuánto mides?</h2>
-        <select value={f.heightUnit} onChange={e => set('heightUnit', e.target.value)}>
-          <option value="cm">Centímetros</option><option value="ft">Pies y pulgadas</option>
-        </select>
-        {f.heightUnit === 'cm' ? (
-          <input type="number" inputMode="decimal" placeholder="Altura en cm" value={f.height} onChange={e => set('height', e.target.value)} />
-        ) : (
-          <div className="row">
-            <input type="number" placeholder="Pies" value={f.feet} onChange={e => set('feet', e.target.value)} />
-            <input type="number" placeholder="Pulgadas" value={f.inches} onChange={e => set('inches', e.target.value)} />
+        <p className="hint">Desliza la regla hasta tu estatura.</p>
+        <div className="rp-row">
+          <div className="rp-val">
+            <div className="seg">
+              <button type="button" className={hCm ? 'on' : ''} onClick={() => switchHeight('cm')}>cm</button>
+              <button type="button" className={!hCm ? 'on' : ''} onClick={() => switchHeight('ft')}>ft</button>
+            </div>
+            <div className="rp-num">
+              {hCm ? hVal : ftIn(hVal)}{hCm && <small>cm</small>}
+            </div>
+            <p className="hint" style={{ margin: 0 }}>
+              ≈ {hCm ? ftIn(cmToIn(hVal)) : `${Math.round(hVal * 2.54)} cm`}
+            </p>
+            {!hTouched && <p className="hint">Mueve la regla para continuar.</p>}
           </div>
-        )}
+          {hCm
+            ? <RulerPicker key="cm" value={hVal} min={90} max={250} step={1} tick={12} major={10} mid={5}
+                label={v => String(v)} onChange={setHeightCm} ariaLabel="Estatura en centímetros" />
+            : <RulerPicker key="ft" value={hVal} min={36} max={98} step={1} tick={14} major={12} mid={6}
+                label={v => `${v / 12}′`} onChange={setHeightIn} ariaLabel="Estatura en pies y pulgadas" />}
+        </div>
       </>)}
 
       {step === 6 && (<>

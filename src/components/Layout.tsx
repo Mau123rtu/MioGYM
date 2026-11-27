@@ -5,6 +5,7 @@ import MealReminderWatcher from './MealReminderWatcher'
 import TermsGate from './TermsGate'
 import PwaStatus from './PwaStatus'
 import ReminderWatcher from './ReminderWatcher'
+import AssistantFab from './AssistantFab'
 
 const tabs = [
   { to: '/app', end: true, icon: 'home', label: 'Inicio' },
@@ -30,6 +31,7 @@ function Shell() {
       <TermsGate />
       <ReminderWatcher />
       <main className="content"><Outlet /></main>
+      <AssistantFab />
             <nav className="bottom-nav">
         <div className="side-brand"><img src="/Logo_GYM.png" alt="MioGym" /></div>
         {tabs.map(t => (

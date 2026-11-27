@@ -11,6 +11,8 @@ import Measurements from '../components/Measurements'
 import PasswordField from '../components/PasswordField'
 import { checkPassword } from '../lib/password'
 import { safeInsert } from '../lib/offline'
+import { blockInvalidKeys, LIMITS } from '../lib/limits'
+
 
 const GOAL: Record<string, string> = {
   masa: 'Ganar masa muscular', grasa: 'Perder grasa', fuerza: 'Ganar fuerza',
@@ -69,11 +71,19 @@ export default function Account() {
 
   const save = async () => {
     const w = Number(weight), h = Number(height)
-    if (!w || !h) return
+    if (!weight || !height || Number.isNaN(w) || Number.isNaN(h)) {
+      setMsg('Ingresa tu peso y tu altura.'); return
+    }
+    if (w < LIMITS.weight.min || w > LIMITS.weight.max) {
+      setMsg(`El peso debe estar entre ${LIMITS.weight.min} y ${LIMITS.weight.max} kg.`); return
+    }
+    if (h < LIMITS.height.min || h > LIMITS.height.max) {
+      setMsg(`La altura debe estar entre ${LIMITS.height.min} y ${LIMITS.height.max} cm.`); return
+    }
     const uid = session!.user.id
     const { error } = await supabase.from('profiles').update({ weight_kg: w, height_cm: h }).eq('id', uid)
     if (error) { setMsg(error.message); return }
-        if (w !== profile?.weight_kg) await safeInsert('weight_logs', { user_id: uid, weight_kg: w, logged_at: new Date().toISOString() })
+    if (w !== profile?.weight_kg) await safeInsert('weight_logs', { user_id: uid, weight_kg: w, logged_at: new Date().toISOString() })
     await refreshProfile(); await load()
     setMsg('Datos actualizados')
   }
@@ -101,7 +111,12 @@ export default function Account() {
 
   const name = profile?.full_name ?? profile?.username ?? ''
   const age = calcAge(profile?.birth_date ?? null)
-  const bmi = calcBMI(Number(weight) || profile?.weight_kg, Number(height) || profile?.height_cm)
+
+  // IMC: solo usa los valores escritos si están dentro del rango permitido
+  const wNum = Number(weight), hNum = Number(height)
+  const wOk = wNum >= LIMITS.weight.min && wNum <= LIMITS.weight.max
+  const hOk = hNum >= LIMITS.height.min && hNum <= LIMITS.height.max
+  const bmi = calcBMI(wOk ? wNum : profile?.weight_kg, hOk ? hNum : profile?.height_cm)
 
   // Seguimiento
   const weights = wlogs.map(w => Number(w.weight_kg))
@@ -152,10 +167,15 @@ export default function Account() {
         open={openId === 'medidas'} onToggle={toggle}>
         <div className="row">
           <label style={{ flex: 1 }}><span className="hint">Peso (kg)</span>
-            <input type="number" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} /></label>
+            <input type="number" inputMode="decimal" min={LIMITS.weight.min} max={LIMITS.weight.max} step="0.1"
+              value={weight} onChange={e => setWeight(e.target.value)} onKeyDown={blockInvalidKeys} /></label>
           <label style={{ flex: 1 }}><span className="hint">Altura (cm)</span>
-            <input type="number" inputMode="decimal" value={height} onChange={e => setHeight(e.target.value)} /></label>
+            <input type="number" inputMode="decimal" min={LIMITS.height.min} max={LIMITS.height.max} step="0.1"
+              value={height} onChange={e => setHeight(e.target.value)} onKeyDown={blockInvalidKeys} /></label>
         </div>
+        <p className="hint" style={{ margin: '.3rem 0 0' }}>
+          Peso: {LIMITS.weight.min}–{LIMITS.weight.max} kg · Altura: {LIMITS.height.min}–{LIMITS.height.max} cm
+        </p>
         {bmi && <p style={{ margin: '.4rem 0 0' }}>IMC: <b>{bmi.value}</b> ({bmi.label})</p>}
         <button className="btn primary" onClick={save}>Guardar</button>
         {msg && <p className="hint">{msg}</p>}

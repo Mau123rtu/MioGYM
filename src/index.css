@@ -176,7 +176,7 @@ button.back{background:none;border:0;padding:0;font-family:inherit;cursor:pointe
 .sthumb .circ{width:62px;height:62px;border-radius:50%;border:2px solid var(--line);background:var(--s1);display:grid;place-items:center;font:700 1.3rem 'Barlow Condensed',sans-serif;color:var(--text)}
 .sthumb.on .circ{border-color:var(--y);color:var(--y)}
 .sthumb.ok .circ{background:var(--y);border-color:var(--y);color:#000}
-.sthumb small{font-size:.62rem;line-height:1.2;max-width:74px;display:-webkit-box; -webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sthumb small{font-size:.62rem;line-height:1.2;max-width:74px;display:-webkit-box; -webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .sthumb.on small{color:var(--text)}
 .body-wrap.compact{background:none;border:0;padding:.2rem 0}
 .body-wrap.compact svg{height:190px}
@@ -720,4 +720,21 @@ button.back{background:none;border:0;padding:0;font-family:inherit;cursor:pointe
   .viewer-in{max-width:520px}
   .terms-dlg{max-width:560px}
   .dlg{max-width:420px}
+
+
+  /* Botón flotante del asistente */
+.fab{position:fixed;z-index:40;right:max(14px,calc((100vw - 430px)/2 + 14px));bottom:calc(76px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;background:var(--y);color:#000;display:grid;place-items:center;text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,.6),0 0 0 3px rgba(255,212,0,.18);transition:transform .15s}
+.fab:active{transform:scale(.94)}
+.fab span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.app.has-mini .fab{bottom:calc(144px + env(safe-area-inset-bottom,0px))}
+
+@media (min-width:1024px) and (hover:hover) and (pointer:fine){
+  .fab,.app.has-mini .fab{right:2rem;bottom:2rem;width:auto;height:58px;min-width:58px;border-radius:29px;padding:0 1rem;display:flex;align-items:center;gap:0}
+  .fab span{position:static;width:auto;height:auto;overflow:hidden;clip:auto;max-width:0;opacity:0;white-space:nowrap;font-weight:700;font-size:.9rem;transition:max-width .25s,opacity .2s,margin .25s}
+  .fab:hover span{max-width:110px;opacity:1;margin-left:.6rem}
+  .fab:hover{filter:brightness(1.08)}
+}
+
+@media (min-width:1024px) and (hover:hover) and (pointer:fine){
+}
 }
